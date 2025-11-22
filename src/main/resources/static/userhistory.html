@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <main class="main-container1">
+    <div class="welcome-card" id="table-container">
+      <h1>History</h1> 
+      <table class="notif-table" id="notifTable">
+        <thead>
+          <tr>
+            <th>Donation Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr>
+            <td colspan="4" style="text-align: center;">Loading history...</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button class="x-btn" onclick="goBack()">
+        <img src="images/458594.png" alt="Notifications">
+      </button>
+    </div>
+    
+  </main>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Load donation history when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+      const username = localStorage.getItem('currentUser');
+      const tbody = document.getElementById('historyTableBody');
+      
+      if (!username) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Please log in to view your donation history.</td></tr>';
+        return;
+      }
+
+      const donations = await Donation.getUserDonations(username);
+
+      if (donations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No donation history yet. Submit your first donation!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = donations.map((donation, index) => {
+        const isLastRow = index === donations.length - 1;
+        const rowId = isLastRow ? 'tabmarg' : '';
+        const statusClass = donation.status === 'APPROVED' ? 'status-approved' : 
+                           donation.status === 'PENDING' ? 'status-pending' : 'status-rejected';
+        
+        return `
+          <tr ${rowId ? `id="${rowId}"` : ''}>
+            <td>${donation.donationType}</td>
+            <td>${Donation.formatAmount(donation.amount)}</td>
+            <td>${Donation.formatDate(donation.createdAt)}</td>
+            <td><span class="${statusClass}">${donation.status}</span></td>
+          </tr>
+        `;
+      }).join('');
+    });
+  </script>
+</body>
+</html>

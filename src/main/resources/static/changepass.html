@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password - Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+  <button class="back-btn" id="bckbtn" onclick="goBack()">←</button>
+  <div class="auth-container">
+    <h2>Reset Password</h2>
+    <p class="auth-subtitle">Create a new password for your account.</p>
+
+    <form>
+      <label>New Password:</label>
+      <input type="password" id="new-password" placeholder="Enter new password" required>
+
+      <label>Confirm Password:</label>
+      <input type="password" id="confirm-password" placeholder="Re-enter new password" required>
+
+      <button type="button" class="red-btn" id="reset-password-btn" onclick="goToSuccChanged()">Reset Password</button>
+    </form>
+  </div>
+
+  <footer>
+    <p>© 2025 Donation Report System | Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+

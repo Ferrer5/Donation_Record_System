@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <nav class="nav-links">
+      <a href="#">About</a>
+      <a href="index.html">Log Out</a>
+    </nav>
+  </header>
+
+  <main class="main-container1">
+    <div class="welcome-card" id="welc-card">
+      <h1 id="welc">Notification</h1> 
+
+      <div class="notifications" id="notificationsContainer">
+        <!-- Notifications will be loaded dynamically -->
+        <div class="loading-message" id="loadingMessage">Loading notifications...</div>
+      </div>
+
+        <button class="x-btn" id="xbtn" onclick="goBack()">
+          <img src="images/458594.png" alt="Notifications">
+      </button>
+  
+      
+    </div>
+    
+  </main>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Load notifications when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+      const username = localStorage.getItem('currentUser');
+      if (!username) {
+        document.getElementById('notificationsContainer').innerHTML = 
+          '<div class="notif-box"><p>Please log in to view notifications.</p></div>';
+        return;
+      }
+
+      const notifications = await Donation.getUserNotifications(username);
+      const container = document.getElementById('notificationsContainer');
+      const loadingMessage = document.getElementById('loadingMessage');
+      
+      if (loadingMessage) {
+        loadingMessage.remove();
+      }
+
+      if (notifications.length === 0) {
+        container.innerHTML = '<div class="notif-box"><p>No notifications yet. Your approved donations will appear here.</p></div>';
+        return;
+      }
+
+      container.innerHTML = notifications.map(donation => `
+        <div class="notif-box">
+          <p><strong>Donation Approved:</strong> Your donation of ${Donation.formatAmount(donation.amount)} (${donation.donationType}) has been approved!</p>
+          <span class="notif-time">${Donation.formatDate(donation.createdAt)}</span>
+        </div>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

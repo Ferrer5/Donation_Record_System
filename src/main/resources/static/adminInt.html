@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <nav class="nav-links">
+      <a href="">About</a>
+      <a href="index.html">Log Out</a>
+    </nav>
+  </header>
+
+  <main class="main-container1">
+    <div class="welcome-card" id="welc-card">
+      <h1 id="welc">WELCOME!</h1> 
+      <p id="welc1">
+        Greetings, Admin! Here you can manage all donation records <br>
+        and keep track of user activity. Post announcements, stay updated, and <br>
+        ensure everything runs smoothly in your community.
+      </p>
+      <h1 id="welc4">Pending Donations</h1>
+      
+      <div class="notifications" id="pendingDonationsContainer">
+        <div class="loading-message">Loading pending donations...</div>
+      </div>
+
+      <div class="button-group">
+        <button id="Bdonate" class="styled-btn donate" onclick="goToMembers()">Members</button>
+        <button id="Bhistory" class="styled-btn history" onclick="goToAddRecord()">Add Record</button>
+      </div>
+
+      <button class="notif-btn" onclick="goToNotif()">
+        <img src="images/notif-icon.png" alt="Notifications">
+      </button>
+    </div>
+    
+  </main>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Load pending donations when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+      await loadPendingDonations();
+    });
+
+    async function loadPendingDonations() {
+      const container = document.getElementById('pendingDonationsContainer');
+      const donations = await Donation.getPendingDonations();
+
+      if (donations.length === 0) {
+        container.innerHTML = '<div class="notif-box"><p>No pending donations at this time.</p></div>';
+        return;
+      }
+
+      container.innerHTML = donations.map(donation => `
+        <div class="notif-box">
+          <p><strong>${donation.fullName}</strong> (${donation.email})</p>
+          <p>Type: ${donation.donationType} | Amount: ${Donation.formatAmount(donation.amount)}</p>
+          ${donation.message ? `<p><em>${donation.message}</em></p>` : ''}
+          <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
+          <button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem;" 
+                  onclick="approveDonation(${donation.id})">
+            Approve Donation
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function approveDonation(donationId) {
+      const success = await Donation.approve(donationId);
+      if (success) {
+        await loadPendingDonations(); // Refresh the list
+      }
+    }
+  </script>
+</body>
+</html>

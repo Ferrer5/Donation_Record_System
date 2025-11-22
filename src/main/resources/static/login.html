@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css" />
+  
+</head>
+<body class="auth-body">
+  <button class="back-btn" id="bckbtn" onclick="goHome()">←</button>
+  <div class="auth-container">
+    <h2>Welcome Back</h2>
+    <p class="auth-subtitle">Log in to continue</p>
+
+    <form>
+      <label>Username:</label>
+      <input type="username" id="username" placeholder="Enter password" required>
+      
+      <label>Password:</label>
+      <input type="password" id="password" placeholder="Enter password" required>
+
+      <a href="forgot.html" class="forgot">Forgot Password?</a>
+
+      <button type="button" class="red-btn" id="log-btn" onclick="loginUser()">Log In</button>
+    </form>
+
+    <p class="auth-footer" id="authfoot">Don’t have an account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+  <button class="adbutton" onclick="goToAdminLogin()">
+      <img src="images/admin-button.png" alt="Admin Button">
+  </button>
+
+  <footer>
+    <p>© 2025 Donation Report System | Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <nav class="nav-links">
+      <a href="#">About</a>
+      <a href="index.html">Log Out</a>
+    </nav>
+  </header>
+
+  <main class="main-container1">
+    <div class="welcome-card">
+      <h1 id="welc">WELCOME!</h1> 
+      <p id="welc1">
+        Hello, <strong>John Mark!</strong><br>
+        You’re now logged in to the <b>Donation Report System</b>.<br>
+        From here, you can manage donations, track information, <br> 
+        and generate detailed reports. Let’s continue making every <br>
+        contribution count!
+      </p>
+      <h1 id="welc3">God Bless</h1>
+
+      <div class="button-group">
+        <button id="Bdonate" class="styled-btn donate" onclick="goToDonationForm()">Donate</button>
+        <button id="Bhistory" class="styled-btn history" onclick="goToUserHistory()">History</button>
+      </div>
+
+      <button class="notif-btn" onclick="goToNotif()">
+        <img src="images/notif-icon.png" alt="Notifications">
+      </button>
+    </div>
+    
+  </main>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <div class="donation-form-container">
+    <h2>Make a Donation</h2>
+    <button class="x-btn" onclick="goBack()">
+        <img src="images/458594.png" alt="Notifications">
+      </button>
+    <form class="donation-form" id="donationForm" onsubmit="event.preventDefault(); submitDonation(event);">
+     <label for="fullname">Full Name:</label>
+     <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+
+     <label for="email">Email Address:</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+     <label for="type">Donation Type:</label>
+      <input type="text" id="type" name="type" placeholder="Enter type (e.g., Cash, Goods, Food)" required>
+    
+
+     <label for="amount">Donation Amount (₱):</label>
+      <input type="number" id="amount" name="amount" placeholder="Enter amount" min="1" required>
+
+     <label for="message">Message (optional):</label>
+     <textarea id="message" name="message" rows="3" placeholder="Write a short note..."></textarea>
+
+      <button type="submit" class="styled-btn submit-donate">Submit Donation</button>
+    </form>
+
+      <button class="x-btn" onclick="goBack()">
+        <img src="images/458594.png" alt="Notifications">
+      </button>
+    </div>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
