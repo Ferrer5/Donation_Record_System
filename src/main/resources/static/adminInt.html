@@ -12,10 +12,21 @@
       <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
       <h2>Donation Record System</h2>
     </div>
-    <nav class="nav-links">
-      <a href="">About</a>
-      <a href="index.html">Log Out</a>
-    </nav>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="goToViewRecord(); return false;">View Record</a>
+        <a href="#" onclick="goToAddRecord(); return false;">Add Record</a>
+        <a href="#" onclick="goToMembers(); return false;">Members</a>
+        <a href="#" onclick="handleAdminLogout(); return false;">Log Out</a>
+      </div>
+    </div>
   </header>
 
   <main class="main-container1">
@@ -23,18 +34,13 @@
       <h1 id="welc">WELCOME!</h1> 
       <p id="welc1">
         Greetings, Admin! Here you can manage all donation records <br>
-        and keep track of user activity. Post announcements, stay updated, and <br>
+        and keep track of user activity. Post announcements, stay updated,<br> and 
         ensure everything runs smoothly in your community.
       </p>
       <h1 id="welc4">Pending Donations</h1>
       
       <div class="notifications" id="pendingDonationsContainer">
         <div class="loading-message">Loading pending donations...</div>
-      </div>
-
-      <div class="button-group">
-        <button id="Bdonate" class="styled-btn donate" onclick="goToMembers()">Members</button>
-        <button id="Bhistory" class="styled-btn history" onclick="goToAddRecord()">Add Record</button>
       </div>
 
       <button class="notif-btn" onclick="goToNotif()">
@@ -61,22 +67,32 @@
       const donations = await Donation.getPendingDonations();
 
       if (donations.length === 0) {
-        container.innerHTML = '<div class="notif-box"><p>No pending donations at this time.</p></div>';
+        container.innerHTML = '<div class="notif-box"><p>✅ All caught up! No pending donations at this time.</p></div>';
         return;
       }
 
-      container.innerHTML = donations.map(donation => `
-        <div class="notif-box">
-          <p><strong>${donation.fullName}</strong> (${donation.email})</p>
-          <p>Type: ${donation.donationType} | Amount: ${Donation.formatAmount(donation.amount)}</p>
-          ${donation.message ? `<p><em>${donation.message}</em></p>` : ''}
-          <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
-          <button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem;" 
-                  onclick="approveDonation(${donation.id})">
-            Approve Donation
-          </button>
-        </div>
-      `).join('');
+      container.innerHTML = donations.map(donation => {
+        const amountDisplay = donation.donationType === 'Cash' 
+          ? Donation.formatAmount(donation.amount)
+          : donation.message ? donation.message.split('\n')[0].replace('Items: ', '') : 'N/A';
+        
+        return `
+          <div class="notif-box" style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong>${donation.fullName}</strong>
+              <span style="background: #ff7b00; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">PENDING</span>
+            </div>
+            <p><strong>Type:</strong> ${donation.donationType} | <strong>Amount/Items:</strong> ${amountDisplay}</p>
+            ${donation.email ? `<p><strong>Email:</strong> ${donation.email}</p>` : ''}
+            ${donation.message && donation.donationType !== 'Goods' ? `<p><em>${donation.message}</em></p>` : ''}
+            <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
+            <button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem; width: 100%;" 
+                    onclick="approveDonation(${donation.id})">
+              Approve Donation
+            </button>
+          </div>
+        `;
+      }).join('');
     }
 
     async function approveDonation(donationId) {

@@ -146,5 +146,75 @@ public class DonationController {
         
         return response;
     }
+
+    // ADMIN ADD RECORD (admin can add donation records directly, auto-approved)
+    @PostMapping("/admin/add")
+    public Map<String, Object> adminAddRecord(@RequestBody Map<String, Object> payload) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Donation donation = new Donation();
+            
+            // For admin-added records, use admin username or a system default
+            // Note: The username must exist in users table due to foreign key constraint
+            // If adding records for non-users, create a system user account first
+            String donorName = (String) payload.get("donorName");
+            String username = (String) payload.get("username");
+            if (username == null || username.trim().isEmpty()) {
+                // Default to a system username - admin should ensure this user exists
+                // Or create a system user account in the database
+                username = "admin_system";
+            }
+            
+            donation.setUsername(username);
+            donation.setFullName(donorName != null ? donorName : "Unknown Donor");
+            donation.setEmail((String) payload.get("email"));
+            if (donation.getEmail() == null || donation.getEmail().trim().isEmpty()) {
+                donation.setEmail("noemail@donation.local");
+            }
+            
+            String donationType = (String) payload.get("donationType");
+            if (donationType == null || donationType.trim().isEmpty()) {
+                donationType = (String) payload.get("otherDonation");
+            }
+            donation.setDonationType(donationType != null ? donationType : "Others");
+            
+            // Handle amount - for goods, store 0 and put description in message
+            Object amountObj = payload.get("amount");
+            Double amount = 0.0;
+            String message = (String) payload.get("message");
+            
+            if (amountObj != null) {
+                try {
+                    amount = Double.parseDouble(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    amount = 0.0;
+                }
+            }
+            
+            // If it's goods and no amount, put description in message
+            if (("Goods".equalsIgnoreCase(donationType) || "Others".equalsIgnoreCase(donationType)) && amount == 0) {
+                String itemsDescription = (String) payload.get("itemsDescription");
+                if (itemsDescription != null && !itemsDescription.trim().isEmpty()) {
+                    message = message != null ? message + "\nItems: " + itemsDescription : "Items: " + itemsDescription;
+                }
+            }
+            
+            donation.setAmount(amount);
+            donation.setMessage(message);
+            donation.setStatus("APPROVED"); // Admin-added records are auto-approved
+            
+            donationRepository.save(donation);
+            
+            response.put("success", true);
+            response.put("message", "Donation record added successfully!");
+            response.put("donationId", donation.getId());
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error adding donation record: " + e.getMessage());
+        }
+        
+        return response;
+    }
 }
 

@@ -12,20 +12,30 @@
       <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
       <h2>Donation Record System</h2>
     </div>
-    <nav class="nav-links">
-      <a href="#">About</a>
-      <a href="index.html">Log Out</a>
-    </nav>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="showAbout(); return false;">About</a>
+        <a href="#" onclick="handleLogout(); return false;">Log Out</a>
+        <a href="#" onclick="handleDeleteAccount(); return false;" class="delete-account">Delete Account</a>
+      </div>
+    </div>
   </header>
 
   <main class="main-container1">
     <div class="welcome-card">
       <h1 id="welc">WELCOME!</h1> 
       <p id="welc1">
-        Hello, <strong>John Mark!</strong><br>
-        You’re now logged in to the <b>Donation Report System</b>.<br>
+        Hello, <strong id="username-display">User</strong>!<br>
+        You're now logged in to the <b>Donation Report System</b>.<br>
         From here, you can manage donations, track information, <br> 
-        and generate detailed reports. Let’s continue making every <br>
+        and generate detailed reports. Let's continue making every <br>
         contribution count!
       </p>
       <h1 id="welc3">God Bless</h1>

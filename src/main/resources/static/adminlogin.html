@@ -12,10 +12,12 @@
 
   <div class="auth-container">
     <h2>Admin</h2>
-    <form id="adform">
-      <label>Password:</label>
-      <input type="password" placeholder="Enter password" required>
-      <button type="submit" class="red-btn" id="sign-btn" onclick="goToAdminInterface()">Enter</button>
+    <form id="adform" onsubmit="event.preventDefault(); adminLogin();">
+      <label for="adminName">Admin Name:</label>
+      <input type="text" id="adminName" name="adminName" placeholder="Enter admin name" required>
+      <label for="adminPassword">Password:</label>
+      <input type="password" id="adminPassword" name="adminPassword" placeholder="Enter password" required>
+      <button type="submit" class="red-btn" id="sign-btn">Enter</button>
     </form>
   </div>
 

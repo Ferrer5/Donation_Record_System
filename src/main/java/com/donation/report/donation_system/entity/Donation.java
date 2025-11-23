@@ -32,12 +32,11 @@ public class Donation {
     @Column(name = "status", nullable = false, length = 20)
     private String status; // PENDING, APPROVED, REJECTED
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
         if (status == null) {
             status = "PENDING";
         }

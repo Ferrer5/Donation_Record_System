@@ -12,18 +12,27 @@
       <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
       <h2>Donation Record System</h2>
     </div>
-    <nav class="nav-links">
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Contact</a>
-    </nav>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="showAbout(); return false;">About</a>
+        <a href="#" onclick="handleLogout(); return false;">Log Out</a>
+        <a href="#" onclick="handleDeleteAccount(); return false;" class="delete-account">Delete Account</a>
+      </div>
+    </div>
   </header>
 
   <div class="donation-form-container">
-    <h2>Make a Donation</h2>
     <button class="x-btn" onclick="goBack()">
-        <img src="images/458594.png" alt="Notifications">
-      </button>
+      <img src="images/458594.png" alt="Close">
+    </button>
+    <h2>Make a Donation</h2>
     <form class="donation-form" id="donationForm" onsubmit="event.preventDefault(); submitDonation(event);">
      <label for="fullname">Full Name:</label>
      <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
@@ -32,22 +41,30 @@
       <input type="email" id="email" name="email" placeholder="Enter your email" required>
 
      <label for="type">Donation Type:</label>
-      <input type="text" id="type" name="type" placeholder="Enter type (e.g., Cash, Goods, Food)" required>
-    
+      <select id="type" name="type" required onchange="handleDonationTypeChange()">
+        <option value="">Select donation type...</option>
+        <option value="Cash">Cash</option>
+        <option value="Goods">Goods</option>
+        <option value="Food">Food</option>
+        <option value="Others">Others</option>
+      </select>
 
-     <label for="amount">Donation Amount (₱):</label>
-      <input type="number" id="amount" name="amount" placeholder="Enter amount" min="1" required>
+     <div id="amountField" style="display: none;">
+       <label for="amount">Donation Amount (₱):</label>
+       <input type="number" id="amount" name="amount" placeholder="Enter amount" min="1">
+     </div>
+
+     <div id="itemsField" style="display: none;">
+       <label for="numberOfItems">Number of Items:</label>
+       <input type="text" id="numberOfItems" name="numberOfItems" placeholder="e.g. 10kg rice">
+     </div>
 
      <label for="message">Message (optional):</label>
      <textarea id="message" name="message" rows="3" placeholder="Write a short note..."></textarea>
 
       <button type="submit" class="styled-btn submit-donate">Submit Donation</button>
     </form>
-
-      <button class="x-btn" onclick="goBack()">
-        <img src="images/458594.png" alt="Notifications">
-      </button>
-    </div>
+  </div>
 
   <footer class="main-footer">
     <p>&copy; 2025 Donation Record System | All Rights Reserved</p>

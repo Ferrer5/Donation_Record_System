@@ -4,8 +4,14 @@
  */
 
 // ==================== Configuration ====================
+// Automatically detect if running locally or in production
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocalhost 
+  ? 'http://localhost:8080/api' 
+  : `${window.location.origin}/api`;
+
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:8080/api',
+  API_BASE_URL: API_BASE_URL,
   TOAST_DURATION: 3000,
   REDIRECT_DELAY: 1000
 };
@@ -41,8 +47,14 @@ function goBack() { Navigation.goBack(); }
 function goToLogin() { Navigation.goTo('login'); }
 function goHome() { Navigation.goHome(); }
 function goToForgot() { Navigation.goTo('forgot'); }
-function goToForgot1() { Navigation.goTo('forgot1'); }
-function goToChangepass() { Navigation.goTo('changepass'); }
+async function goToForgot1() { 
+  // Send verification code before navigating
+  await PasswordReset.requestCode();
+}
+async function goToChangepass() { 
+  // Verify code before navigating to change password
+  await PasswordReset.verifyCode();
+}
 function goToSuccChanged() { Navigation.goTo('succChanged'); }
 function goToAdminLogin() { Navigation.goTo('adminlogin'); }
 function goToUserInt() { Navigation.goTo('userInt'); }
@@ -52,6 +64,7 @@ function goToDonationForm() { Navigation.goTo('donationform'); }
 function goToAdminInterface() { Navigation.goTo('adminInt'); }
 function goToAddRecord() { Navigation.goTo('addrecord'); }
 function goToMembers() { Navigation.goTo('members'); }
+function goToViewRecord() { Navigation.goTo('adminrecord'); }
 
 // ==================== Toast Notification System ====================
 const Toast = {
@@ -243,6 +256,41 @@ const Auth = {
   }
 };
 
+// ==================== Admin Authentication Functions ====================
+const AdminAuth = {
+  /**
+   * Handle admin login
+   */
+  async login() {
+    const requiredFields = ['adminName', 'adminPassword'];
+    
+    if (!FormUtils.validateRequired(requiredFields)) {
+      return;
+    }
+
+    const { adminName, adminPassword } = FormUtils.getValues(requiredFields);
+
+    try {
+      const data = await API.post('/admin/login', { 
+        adminName, 
+        password: adminPassword 
+      });
+      
+      Toast.show(data.message, data.success ? 'success' : 'error');
+      
+      if (data.success) {
+        // Store admin name in localStorage
+        localStorage.setItem('adminUser', adminName);
+        setTimeout(() => {
+          Navigation.goTo('adminInt');
+        }, CONFIG.REDIRECT_DELAY);
+      }
+    } catch (error) {
+      Toast.error('An error occurred. Please try again.');
+    }
+  }
+};
+
 // ==================== Public API (for HTML onclick handlers) ====================
 /**
  * Login user - called from login form
@@ -259,6 +307,13 @@ function signupUser() {
 }
 
 /**
+ * Admin login - called from admin login form
+ */
+function adminLogin() {
+  AdminAuth.login();
+}
+
+/**
  * Show toast notification - public API
  * @param {string} message - Message to display
  * @param {string} type - Type of toast ('success' or 'error')
@@ -270,13 +325,52 @@ function showToast(message, type = 'error') {
 // ==================== Donation Functions ====================
 const Donation = {
   /**
+   * Handle donation type change to show/hide appropriate fields
+   */
+  handleTypeChange() {
+    const typeSelect = document.getElementById('type');
+    const amountField = document.getElementById('amountField');
+    const itemsField = document.getElementById('itemsField');
+    const amountInput = document.getElementById('amount');
+    const itemsInput = document.getElementById('numberOfItems');
+    
+    if (!typeSelect || !amountField || !itemsField) {
+      return;
+    }
+    
+    const selectedType = typeSelect.value;
+    
+    // Hide both fields initially
+    amountField.style.display = 'none';
+    itemsField.style.display = 'none';
+    
+    // Remove required attribute from both inputs
+    if (amountInput) amountInput.removeAttribute('required');
+    if (itemsInput) itemsInput.removeAttribute('required');
+    
+    // Clear values when switching types
+    if (amountInput) amountInput.value = '';
+    if (itemsInput) itemsInput.value = '';
+    
+    // Show appropriate field based on selection
+    if (selectedType === 'Cash') {
+      amountField.style.display = 'block';
+      if (amountInput) amountInput.setAttribute('required', 'required');
+    } else if (selectedType === 'Goods') {
+      itemsField.style.display = 'block';
+      if (itemsInput) itemsInput.setAttribute('required', 'required');
+    }
+    // For Food and Others, neither field is shown (user can use message field)
+  },
+
+  /**
    * Submit donation form
    * @param {Event} event - Form submit event
    */
   async submit(event) {
     event.preventDefault();
     
-    const requiredFields = ['fullname', 'email', 'type', 'amount'];
+    const requiredFields = ['fullname', 'email', 'type'];
     
     if (!FormUtils.validateRequired(requiredFields)) {
       return;
@@ -289,18 +383,58 @@ const Donation = {
       return;
     }
 
-    const { fullname, email, type, amount, message } = FormUtils.getValues([
-      'fullname', 'email', 'type', 'amount', 'message'
+    const type = FormUtils.getValue('type');
+    const amountInput = document.getElementById('amount');
+    const itemsInput = document.getElementById('numberOfItems');
+    
+    // Validate based on donation type
+    if (type === 'Cash') {
+      const amount = FormUtils.getValue('amount');
+      if (!amount || parseFloat(amount) <= 0) {
+        Toast.error('Please enter a valid donation amount');
+        return;
+      }
+    } else if (type === 'Goods') {
+      const numberOfItems = FormUtils.getValue('numberOfItems');
+      if (!numberOfItems || numberOfItems.trim() === '') {
+        Toast.error('Please enter the number of items');
+        return;
+      }
+    }
+
+    const { fullname, email, message } = FormUtils.getValues([
+      'fullname', 'email', 'message'
     ]);
 
+    // Get amount or items based on type
+    let amount = 0;
+    let itemsDescription = '';
+    
+    if (type === 'Cash') {
+      amount = parseFloat(FormUtils.getValue('amount'));
+    } else if (type === 'Goods') {
+      itemsDescription = FormUtils.getValue('numberOfItems');
+      // For goods, we'll store the description in the amount field as 0
+      // and append it to the message, or we could modify backend
+      // For now, let's store it in message field
+    }
+
     try {
+      // For Goods, combine items description with message
+      const finalMessage = type === 'Goods' && itemsDescription 
+        ? `Items: ${itemsDescription}${message ? '\n\n' + message : ''}`
+        : message || '';
+      
+      // For Goods, send 0 as amount (backend expects a number)
+      const amountToSend = type === 'Cash' ? amount : 0;
+
       const data = await API.post('/donations/submit', {
         username,
         fullName: fullname,
         email,
         donationType: type,
-        amount: parseFloat(amount),
-        message: message || ''
+        amount: amountToSend,
+        message: finalMessage
       });
 
       Toast.show(data.message, data.success ? 'success' : 'error');
@@ -308,6 +442,8 @@ const Donation = {
       if (data.success) {
         // Reset form
         document.getElementById('donationForm').reset();
+        // Hide fields after reset
+        this.handleTypeChange();
         // Redirect to user interface after a delay
         setTimeout(() => {
           Navigation.goTo('userInt');
@@ -416,4 +552,281 @@ const Donation = {
  */
 function submitDonation(event) {
   Donation.submit(event);
+}
+
+/**
+ * Handle donation type change - called from donation form
+ */
+function handleDonationTypeChange() {
+  Donation.handleTypeChange();
+}
+
+// ==================== Password Reset Functions ====================
+const PasswordReset = {
+  /**
+   * Request password reset code
+   */
+  async requestCode() {
+    const username = FormUtils.getValue('forgot-username');
+    const email = FormUtils.getValue('forgot-email');
+
+    if (!username || !email) {
+      Toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      const data = await API.post('/forgot-password', { username, email });
+      
+      Toast.show(data.message, data.success ? 'success' : 'error');
+      
+      if (data.success) {
+        // Store username for verification step
+        localStorage.setItem('resetUsername', username);
+        setTimeout(() => {
+          Navigation.goTo('forgot1');
+        }, CONFIG.REDIRECT_DELAY);
+      }
+    } catch (error) {
+      Toast.error('An error occurred. Please try again.');
+    }
+  },
+
+  /**
+   * Verify code and proceed to password reset
+   */
+  async verifyCode() {
+    const username = localStorage.getItem('resetUsername');
+    const code = FormUtils.getValue('verification-code');
+
+    if (!username) {
+      Toast.error('Session expired. Please start over.');
+      Navigation.goTo('forgot');
+      return;
+    }
+
+    if (!code) {
+      Toast.error('Please enter the verification code');
+      return;
+    }
+
+    try {
+      const data = await API.post('/verify-code', { username, code });
+      
+      Toast.show(data.message, data.success ? 'success' : 'error');
+      
+      if (data.success) {
+        // Store code for password reset
+        localStorage.setItem('resetCode', code);
+        setTimeout(() => {
+          Navigation.goTo('changepass');
+        }, CONFIG.REDIRECT_DELAY);
+      }
+    } catch (error) {
+      Toast.error('An error occurred. Please try again.');
+    }
+  },
+
+  /**
+   * Reset password
+   */
+  async resetPassword() {
+    const username = localStorage.getItem('resetUsername');
+    const code = localStorage.getItem('resetCode');
+    const newPassword = FormUtils.getValue('new-password');
+    const confirmPassword = FormUtils.getValue('confirm-password');
+
+    if (!username || !code) {
+      Toast.error('Session expired. Please start over.');
+      Navigation.goTo('forgot');
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      Toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      const data = await API.post('/reset-password', { 
+        username, 
+        code, 
+        newPassword, 
+        confirmPassword 
+      });
+      
+      Toast.show(data.message, data.success ? 'success' : 'error');
+      
+      if (data.success) {
+        // Clear reset data
+        localStorage.removeItem('resetUsername');
+        localStorage.removeItem('resetCode');
+        setTimeout(() => {
+          Navigation.goTo('succChanged');
+        }, CONFIG.REDIRECT_DELAY);
+      }
+    } catch (error) {
+      Toast.error('An error occurred. Please try again.');
+    }
+  }
+};
+
+/**
+ * Reset password - called from change password form
+ */
+function resetPassword() {
+  PasswordReset.resetPassword();
+}
+
+// ==================== User Interface Functions ====================
+/**
+ * Display username on user interface page
+ */
+function displayUsername() {
+  const username = localStorage.getItem('currentUser');
+  const usernameDisplay = document.getElementById('username-display');
+  
+  if (usernameDisplay) {
+    if (username) {
+      usernameDisplay.textContent = username;
+    } else {
+      // If no username found, redirect to login
+      Navigation.goTo('login');
+    }
+  }
+}
+
+// Auto-display username when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if we're on the user interface page
+  if (document.getElementById('username-display')) {
+    displayUsername();
+  }
+  
+  // Initialize donation form fields if on donation form page
+  if (document.getElementById('type')) {
+    Donation.handleTypeChange();
+  }
+});
+
+// ==================== Settings Menu Functions ====================
+/**
+ * Toggle settings dropdown menu
+ */
+function toggleSettingsMenu() {
+  const menu = document.getElementById('settingsMenu');
+  menu.classList.toggle('show');
+}
+
+// Close settings menu when clicking outside
+document.addEventListener('click', function(event) {
+  const settingsContainer = document.querySelector('.settings-container');
+  const settingsMenu = document.getElementById('settingsMenu');
+  
+  if (settingsContainer && !settingsContainer.contains(event.target) && settingsMenu) {
+    settingsMenu.classList.remove('show');
+  }
+});
+
+/**
+ * Show About information
+ */
+function showAbout() {
+  toggleSettingsMenu(); // Close menu
+  alert('Donation Report System\n\n' +
+        'Version: 1.0.0\n\n' +
+        'A community donation management system that allows users to submit donations and track their contribution history.\n\n' +
+        'Developed by CTU Ginatilan Students.\n\n' +
+        '© 2025 All Rights Reserved');
+}
+
+/**
+ * Handle user logout
+ */
+function handleLogout() {
+  toggleSettingsMenu(); // Close menu
+  
+  if (confirm('Are you sure you want to log out?')) {
+    // Clear user data
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('resetUsername');
+    localStorage.removeItem('resetCode');
+    
+    // Redirect to home page
+    Navigation.goHome();
+  }
+}
+
+/**
+ * Handle admin logout
+ */
+function handleAdminLogout() {
+  toggleSettingsMenu(); // Close menu
+  
+  if (confirm('Are you sure you want to log out?')) {
+    // Clear admin data
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('resetUsername');
+    localStorage.removeItem('resetCode');
+    
+    // Redirect to home page
+    Navigation.goHome();
+  }
+}
+
+/**
+ * Handle account deletion
+ */
+async function handleDeleteAccount() {
+  toggleSettingsMenu(); // Close menu
+  
+  const username = localStorage.getItem('currentUser');
+  
+  if (!username) {
+    Toast.error('You must be logged in to delete your account');
+    Navigation.goTo('login');
+    return;
+  }
+  
+  const confirmDelete = confirm(
+    '⚠️ WARNING: This action cannot be undone!\n\n' +
+    'Deleting your account will:\n' +
+    '• Permanently remove your account\n' +
+    '• Delete all your donation records\n' +
+    '• Remove all associated data\n\n' +
+    'Are you absolutely sure you want to delete your account?'
+  );
+  
+  if (!confirmDelete) {
+    return;
+  }
+  
+  // Double confirmation
+  const finalConfirm = confirm('This is your last chance. Delete account permanently?');
+  if (!finalConfirm) {
+    return;
+  }
+  
+  try {
+    const data = await API.post('/delete-account', { username });
+    
+    Toast.show(data.message, data.success ? 'success' : 'error');
+    
+    if (data.success) {
+      // Clear all user data
+      localStorage.clear();
+      
+      setTimeout(() => {
+        Navigation.goHome();
+      }, CONFIG.REDIRECT_DELAY);
+    }
+  } catch (error) {
+    Toast.error('An error occurred while deleting your account. Please try again.');
+  }
 }

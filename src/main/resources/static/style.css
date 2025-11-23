@@ -467,6 +467,129 @@ footer p span {
 .nav-links a:hover {
   color: #ff0000;
 }
+
+/* Settings Button Styles */
+.settings-container {
+  position: relative;
+  margin-right: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.settings-btn {
+  background: linear-gradient(135deg, rgba(255, 59, 59, 0.9), rgba(255, 123, 0, 0.9));
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+  box-shadow: 0 4px 15px rgba(255, 59, 59, 0.4);
+  z-index: 1002;
+  position: relative;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.settings-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 123, 0, 0.95), rgba(255, 59, 59, 0.95));
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 59, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.settings-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 24px;
+  height: 20px;
+}
+
+.settings-icon span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.settings-btn:hover .settings-icon span {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Settings Dropdown Menu */
+.settings-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: linear-gradient(135deg, rgba(255, 59, 59, 0.95), rgba(255, 123, 0, 0.95));
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(255, 59, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 180px;
+  padding: 8px 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.settings-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.settings-menu a {
+  display: block;
+  padding: 12px 20px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(90deg, rgba(255, 59, 59, 0.6), rgba(255, 123, 0, 0.6));
+  margin: 2px 8px;
+  border-radius: 6px;
+}
+
+.settings-menu a:hover {
+  background: linear-gradient(90deg, rgba(255, 123, 0, 0.9), rgba(255, 59, 59, 0.9));
+  border-left-color: #fff;
+  color: #fff;
+  padding-left: 25px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(255, 59, 59, 0.4);
+}
+
+.settings-menu a.delete-account {
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  margin-top: 8px;
+  padding-top: 16px;
+  background: linear-gradient(90deg, rgba(255, 59, 59, 0.7), rgba(220, 20, 60, 0.7));
+}
+
+.settings-menu a.delete-account:hover {
+  background: linear-gradient(90deg, rgba(255, 59, 59, 0.4), rgba(220, 20, 60, 0.4));
+  border-left-color: #fff;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(255, 59, 59, 0.4);
+}
 .main-container1 {
   flex: 1;
   display: flex;
@@ -683,37 +806,86 @@ footer p span {
 .donation-form-container {
   background-color: rgba(251, 126, 58, 0.95);
   color: #000;
-  width: 450px;
-  margin: 20px;
-  padding: 15px 30px;
+  width: 500px;
+  max-width: 90vw;
+  height: 350px; /* Matches welcome-card height */
+  max-height: 350px;
+  margin: 80px auto 20px; /* Reduced top margin to 80px instead of negative */
+  padding: 20px 30px 20px 30px;
   border-radius: 12px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.donation-form-container .x-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
 }
 .donation-form-container h2 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   color: #e63946;
+  flex-shrink: 0;
 }
 .donation-form {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  padding-right: 10px;
+  padding-bottom: 10px;
+}
+.donation-form::-webkit-scrollbar {
+  width: 0;
+  display: none;
+}
+.donation-form {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 .donation-form label {
   font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 8px;
 }
 .donation-form input,
-.donation-form textarea {
+.donation-form textarea,
+.donation-form select {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  cursor: pointer;
 }
 .donation-form input:focus,
-.donation-form textarea:focus {
+.donation-form textarea:focus,
+.donation-form select:focus {
   border-color: #ff7b00;
   box-shadow: 0 0 5px rgba(255, 123, 0, 0.5);
+}
+.donation-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 35px;
+}
+.donation-form select option {
+  background: #fff;
+  color: #000;
+  padding: 10px;
 }
 .submit-donate {
   background: linear-gradient(90deg, #ff3b3b, #ff7b00);
@@ -721,22 +893,24 @@ footer p span {
   font-size: 1rem;
   border: none;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
   width: 200px;
   display: block;
-  margin: 10px auto 0;
+  margin: 15px auto 0;
   cursor: pointer;
-  margin-top: 20px;
+  flex-shrink: 0;
   transition: background 0.3s;
+  font-weight: 600;
 }
 .submit-donate:hover {
   background: linear-gradient(90deg, #ff7b00, #ff3b3b);
 }
 #welc-card {
   width: 500px;
-  height: 400px;
+  height: 480px;
+  max-height: 480px;
   background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 15px;
   display: flex;
   flex-direction: column;

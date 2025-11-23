@@ -12,11 +12,21 @@
       <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
       <h2>Donation Record System</h2>
     </div>
-    <nav class="nav-links">
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Contact</a>
-    </nav>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="goToViewRecord(); return false;">View Record</a>
+        <a href="#" onclick="goToAddRecord(); return false;">Add Record</a>
+        <a href="#" onclick="goToMembers(); return false;">Members</a>
+        <a href="#" onclick="handleAdminLogout(); return false;">Log Out</a>
+      </div>
+    </div>
   </header>
 
   <main class="main-container1">
@@ -49,6 +59,10 @@
           </tr>
         </tbody>
       </table>
+      
+      <button class="x-btn" onclick="goBack()">
+        <img src="images/458594.png" alt="Close">
+      </button>
     </div>
     
   </main>
