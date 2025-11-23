@@ -8,27 +8,15 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: production
       - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: donation-db
-          property: connectionString
+        sync: false
       - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: donation-db
-          property: user
+        sync: false
       - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: donation-db
-          property: password
+        sync: false
       - key: SPRING_MAIL_USERNAME
         sync: false
       - key: SPRING_MAIL_PASSWORD
         sync: false
       - key: PORT
         value: 10000
-
-databases:
-  - name: donation-db
-    databaseName: project2
-    user: donation_user
-    plan: free
 
