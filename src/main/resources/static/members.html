@@ -5,69 +5,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Donation Record System</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .members-state {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #ffffff30;
+      color: #0a0a0a;
+    }
+
+    .members-state.hidden {
+      display: none;
+    }
+
+    .members-state.error {
+      background: #ffe5e5;
+      color: #8b1111;
+    }
+
+    .spinner {
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 0.25rem solid #d3d3d3;
+      border-top-color: #2196f3;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
-<body class="body1">
+<body class="body1 members-page">
   <header class="main-header">
     <div class="logo-title">
       <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
       <h2>Donation Record System</h2>
     </div>
-    <nav class="nav-links">
-      <button id="Bdonate" class="styled-btn donate">
-      <a href="index.html">Log Out</a>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
       </button>
-    </nav>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="goToAnnouncement(); return false;">Make Announcement</a>
+        <a href="#" onclick="goToViewRecord(); return false;">View Record</a>
+        <a href="#" onclick="goToAddRecord(); return false;">Add Record</a>
+        <a href="#" onclick="goToMembers(); return false;">Members</a>
+        <a href="#" onclick="handleAdminLogout(); return false;">Log Out</a>
+      </div>
+    </div>
   </header>
 
   <main class="main-container1">
-    <div id="members-section">
-    <div class="members-container">
-        <div class="top-bar">
-        <button class="back-btn">←</button>
+    <section id="members-section" class="members-container">
+      <div class="top-bar">
+        <button id="backBtn" class="back-btn" type="button">←</button>
         <div class="search-box">
-            <input type="text" placeholder="Search.....">
-            <button class="search-btn">🔍</button>
+          <input id="memberSearch" type="text" placeholder="Search by username or email">
+          <button class="search-btn" type="button">🔍</button>
         </div>
-        </div>
+      </div>
 
-        <h2 class="members-title">Members:</h2>
-
-        <div class="members-list">
-        <div class="member-card">
-            <div class="member-info">
-            <div class="member-icon">👤</div>
-            <span class="member-name">John Mark Ayapana</span>
-            </div>
-            <button class="history-btn">History</button>
+      <header class="members-header">
+        <div>
+          <p class="eyebrow">Community Directory</p>
+          <h2 class="members-title">Registered Members</h2>
+          <p class="members-subtitle">Live view of everyone who has created an account.</p>
         </div>
-
-        <div class="member-card">
-            <div class="member-info">
-            <div class="member-icon">👤</div>
-            <span class="member-name">John Mark Ayapana</span>
-            </div>
-            <button class="history-btn">History</button>
+        <div class="members-stats">
+          <div class="stat-card">
+            <span>Total Members</span>
+            <strong id="memberCount">0</strong>
+          </div>
+          <div class="stat-card secondary">
+            <span>Last Updated</span>
+            <strong id="membersUpdated">–</strong>
+          </div>
         </div>
+      </header>
 
-        <div class="member-card">
-            <div class="member-info">
-            <div class="member-icon">👤</div>
-            <span class="member-name">John Mark Ayapana</span>
-            </div>
-            <button class="history-btn">History</button>
-        </div>
+      <div id="members-loading" class="members-state">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Loading the latest members…</p>
+      </div>
 
-        <div class="member-card">
-            <div class="member-info">
-            <div class="member-icon">👤</div>
-            <span class="member-name">John Mark Ayapana</span>
-            </div>
-            <button class="history-btn">History</button>
-        </div>
-        </div>
-    </div>
-    </div>
+      <div id="members-error" class="members-state hidden" role="alert">
+        <p>We couldn't load the members list. Please refresh the page or try again later.</p>
+      </div>
 
+      <div id="members-empty" class="members-state hidden">
+        <p>No members found yet. As soon as someone signs up, they'll appear here automatically.</p>
+      </div>
+
+      <div id="members-list" class="members-list" aria-live="polite"></div>
+    </section>
   </main>
 
   <footer class="main-footer">
@@ -76,5 +120,133 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    (function () {
+      const API_URL = "/api/users";
+      const membersListEl = document.getElementById("members-list");
+      const memberCountEl = document.getElementById("memberCount");
+      const lastUpdatedEl = document.getElementById("membersUpdated");
+      const loadingStateEl = document.getElementById("members-loading");
+      const emptyStateEl = document.getElementById("members-empty");
+      const errorStateEl = document.getElementById("members-error");
+      errorStateEl.classList.add("error");
+      const searchInputEl = document.getElementById("memberSearch");
+      const backBtnEl = document.getElementById("backBtn");
+      const searchBtnEl = document.querySelector(".search-btn");
+
+      let members = [];
+
+      const formatDate = (value) => {
+        if (!value) {
+          return "—";
+        }
+        try {
+          const parsed = new Date(value);
+          if (Number.isNaN(parsed.getTime())) {
+            return value;
+          }
+          return parsed.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+        } catch (error) {
+          return value;
+        }
+      };
+
+      const updateEmptyState = (visible) => {
+        emptyStateEl.classList.toggle("hidden", !visible);
+        membersListEl.classList.toggle("hidden", visible);
+      };
+
+      const renderMembers = (data) => {
+        membersListEl.innerHTML = "";
+
+        if (!data.length) {
+          updateEmptyState(true);
+          return;
+        }
+
+        updateEmptyState(false);
+
+        const fragment = document.createDocumentFragment();
+        data.forEach((member) => {
+          const card = document.createElement("article");
+          card.className = "member-card";
+          card.innerHTML = `
+            <div class="member-info">
+              <div class="member-icon" aria-hidden="true">👤</div>
+              <div>
+                <p class="member-name">${member.username}</p>
+                <p class="member-meta">${member.email}</p>
+              </div>
+            </div>
+            <div class="member-actions">
+              <p class="member-date">${formatDate(member.createdAt)}</p>
+              <button class="history-btn" type="button" data-username="${member.username}">History</button>
+            </div>
+          `;
+          fragment.appendChild(card);
+        });
+
+        membersListEl.appendChild(fragment);
+      };
+
+      const filterMembers = () => {
+        const query = searchInputEl.value.trim().toLowerCase();
+        if (!query) {
+          renderMembers(members);
+          return;
+        }
+        const filtered = members.filter((member) =>
+          [member.username, member.email].some((value) => value && value.toLowerCase().includes(query))
+        );
+        renderMembers(filtered);
+      };
+
+      const loadMembers = async () => {
+        loadingStateEl.classList.remove("hidden");
+        errorStateEl.classList.add("hidden");
+        try {
+          const response = await fetch(API_URL, { headers: { "Accept": "application/json" } });
+          if (!response.ok) {
+            throw new Error("Failed to fetch members");
+          }
+          const data = await response.json();
+          members = Array.isArray(data) ? data : [];
+          memberCountEl.textContent = members.length;
+          lastUpdatedEl.textContent = new Date().toLocaleTimeString();
+          renderMembers(members);
+        } catch (error) {
+          errorStateEl.classList.remove("hidden");
+          updateEmptyState(false);
+        } finally {
+          loadingStateEl.classList.add("hidden");
+        }
+      };
+
+      const init = () => {
+        searchInputEl.addEventListener("input", filterMembers);
+        if (searchBtnEl) {
+          searchBtnEl.addEventListener("click", filterMembers);
+        }
+        backBtnEl.addEventListener("click", () => window.history.back());
+        membersListEl.addEventListener("click", (event) => {
+          const button = event.target.closest(".history-btn");
+          if (!button) {
+            return;
+          }
+          const username = button.dataset.username;
+          if (username) {
+            window.location.href = `userhistory.html?username=${encodeURIComponent(username)}`;
+          }
+        });
+        loadMembers();
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>

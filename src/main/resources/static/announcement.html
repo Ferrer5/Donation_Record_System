@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Announcements | Donation Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="body1">
+  <header class="main-header">
+    <div class="logo-title">
+      <img src="images/ginatilanlogo1.png" alt="Logo" class="header-logo">
+      <h2>Donation Record System</h2>
+    </div>
+    <div class="settings-container">
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettingsMenu()" title="Settings">
+        <span class="settings-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <div class="settings-menu" id="settingsMenu">
+        <a href="#" onclick="goToAnnouncement(); return false;">Make Announcement</a>
+        <a href="#" onclick="goToViewRecord(); return false;">View Record</a>
+        <a href="#" onclick="goToAddRecord(); return false;">Add Record</a>
+        <a href="#" onclick="goToMembers(); return false;">Members</a>
+        <a href="#" onclick="handleAdminLogout(); return false;">Log Out</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container1">
+    <section class="announcement-wrapper">
+      <div class="admin-card announcement-form-card">
+        <div class="record-header">
+          <div>
+            <p class="eyebrow-text">Broadcast to all donors</p>
+            <h1>Compose Announcement</h1>
+            <p class="helper-text">Share reminders, schedules, or urgent calls for help.</p>
+          </div>
+          <button class="x-btn announcement-close-btn" onclick="goToAdminInterface()" aria-label="Back to dashboard">
+            <img src="images/458594.png" alt="Close">
+          </button>
+        </div>
+
+        <form id="announcementForm" class="record-form">
+          <div class="form-grid announcement-grid">
+            <div class="record-field">
+              <label for="announcementTitle">Title</label>
+              <input type="text" id="announcementTitle" placeholder="e.g. Relief Drive Schedule" required>
+            </div>
+
+            <div class="record-field">
+              <label for="audience">Audience</label>
+              <select id="audience" required>
+                <option value="All Donors" selected>All Donors</option>
+                <option value="Volunteers">Volunteers</option>
+                <option value="Administrators">Administrators</option>
+              </select>
+            </div>
+
+            <div class="record-field field-span-2">
+              <label for="priority">Priority</label>
+              <select id="priority" required>
+                <option value="Normal" selected>Normal</option>
+                <option value="Important">Important</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="record-field full-width">
+            <label for="announcementMessage">Message</label>
+            <textarea id="announcementMessage" rows="4" placeholder="Provide full details, timelines, and contact info..." required></textarea>
+          </div>
+
+          <div class="record-footer">
+            <button type="submit" class="red-btn">Post Announcement</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-card announcement-feed">
+        <div class="record-header">
+          <div>
+            <p class="eyebrow-text">Live board</p>
+            <h1>Recent Announcements</h1>
+            <p class="helper-text">Latest 10 updates shown to the community portal.</p>
+          </div>
+        </div>
+        <div id="announcementList" class="announcement-list">
+          <p class="loading-message">Loading announcements...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="main-footer">
+    <p>&copy; 2025 Donation Record System | All Rights Reserved</p>
+    <p>Developed by CTU Ginatilan Students.</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    const announcementListEl = document.getElementById('announcementList');
+    const form = document.getElementById('announcementForm');
+
+    function priorityClass(priority) {
+      return {
+        'Normal': 'priority-normal',
+        'Important': 'priority-important',
+        'Urgent': 'priority-urgent'
+      }[priority] || 'priority-normal';
+    }
+
+    function renderAnnouncements() {
+      const announcements = AnnouncementBoard.list();
+      if (!announcements.length) {
+        announcementListEl.innerHTML = '<div class="announcement-empty">No announcements yet. Create one on the left.</div>';
+        return;
+      }
+
+      announcementListEl.innerHTML = announcements
+        .map(announcement => `
+          <article class="announcement-item">
+            <header>
+              <div>
+                <h2>${announcement.title}</h2>
+                <p class="meta">
+                  ${new Date(announcement.timestamp).toLocaleString()} • Audience: ${announcement.audience}
+                </p>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                <span class="priority-badge ${priorityClass(announcement.priority)}">${announcement.priority}</span>
+                <button type="button" class="delete-announcement-btn" onclick="deleteAnnouncement('${announcement.timestamp}')">Delete</button>
+              </div>
+            </header>
+            <p>${announcement.message}</p>
+            <footer>
+              <span>Posted by ${announcement.author}</span>
+            </footer>
+          </article>
+        `)
+        .join('');
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const title = document.getElementById('announcementTitle').value.trim();
+      const message = document.getElementById('announcementMessage').value.trim();
+      const audience = document.getElementById('audience').value;
+      const priority = document.getElementById('priority').value;
+
+      if (!title || !message) {
+        Toast.error('Please complete the announcement fields.');
+        return;
+      }
+
+      const newAnnouncement = {
+        title,
+        message,
+        audience,
+        priority,
+        author: localStorage.getItem('adminUser') || 'Administrator',
+        timestamp: new Date().toISOString()
+      };
+
+      AnnouncementBoard.add(newAnnouncement);
+      renderAnnouncements();
+      form.reset();
+      Toast.success('Announcement posted successfully.');
+    });
+
+    document.addEventListener('DOMContentLoaded', renderAnnouncements);
+
+    function deleteAnnouncement(timestamp) {
+      AnnouncementBoard.remove(timestamp);
+      renderAnnouncements();
+      Toast.success('Announcement deleted.');
+    }
+  </script>
+</body>
+</html>
+

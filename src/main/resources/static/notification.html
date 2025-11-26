@@ -121,6 +121,7 @@
 
         if (notifications.length === 0) {
           container.innerHTML = '<div class="notif-box"><p>No notifications yet. Your approved donations will appear here.</p></div>';
+          renderAnnouncementNotifications(container, '📢 Community Announcements');
           return;
         }
 
@@ -137,6 +138,7 @@
             </div>
           `;
         }).join('');
+        renderAnnouncementNotifications(container, '📢 Community Announcements');
       } catch (error) {
         container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
       }
@@ -165,6 +167,7 @@
 
         if (recentDonations.length === 0) {
           container.innerHTML = '<div class="notif-box"><p>No donations yet.</p></div>';
+          renderAnnouncementNotifications(container, '📢 Posted Announcements');
           return;
         }
 
@@ -185,6 +188,7 @@
         }
 
         container.innerHTML = html;
+        renderAnnouncementNotifications(container, '📢 Posted Announcements');
       } catch (error) {
         container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
       }
@@ -226,6 +230,32 @@
       if (success) {
         await loadAdminNotifications(); // Refresh the list
       }
+    }
+
+    function renderAnnouncementNotifications(container, headingText) {
+      if (!window.AnnouncementBoard) {
+        return;
+      }
+      const announcements = AnnouncementBoard.list();
+      if (!announcements.length) {
+        return;
+      }
+
+      const announcementCards = announcements.map(announcement => `
+        <div class="notif-box">
+          <p><strong>📢 ${announcement.title}</strong></p>
+          <p>${announcement.message}</p>
+          <p style="font-size: 0.85rem; margin-top: 8px;">
+            Audience: ${announcement.audience} • Priority: ${announcement.priority}
+          </p>
+          <span class="notif-time">${new Date(announcement.timestamp).toLocaleString()}</span>
+        </div>
+      `).join('');
+
+      container.insertAdjacentHTML('beforeend', `
+        <h3 style="color: #fff; margin: 25px 0 10px 0; font-size: 1.1rem;">${headingText}</h3>
+        ${announcementCards}
+      `);
     }
   </script>
 </body>

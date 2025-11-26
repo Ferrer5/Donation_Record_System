@@ -16,6 +16,74 @@ const CONFIG = {
   REDIRECT_DELAY: 1000
 };
 
+// ==================== Announcement Utilities ====================
+const AnnouncementBoard = {
+  STORAGE_KEY: 'adminAnnouncements',
+
+  defaultAnnouncements() {
+    const now = Date.now();
+    return [
+      {
+        title: 'Barangay Relief Packing',
+        message: 'Volunteers needed at the municipal gym on Saturday, 9AM. Please bring your own water bottle.',
+        audience: 'Volunteers',
+        priority: 'Important',
+        author: localStorage.getItem('adminUser') || 'Administrator',
+        timestamp: new Date(now).toISOString()
+      },
+      {
+        title: 'Typhoon Response Update',
+        message: 'Cash donations are prioritized this week to purchase additional tarpaulins and rice sacks.',
+        audience: 'All Donors',
+        priority: 'Urgent',
+        author: 'Administrator',
+        timestamp: new Date(now - 86400000).toISOString()
+      }
+    ];
+  },
+
+  ensureDefaults() {
+    if (!localStorage.getItem(this.STORAGE_KEY)) {
+      this.save(this.defaultAnnouncements());
+    }
+  },
+
+  list() {
+    try {
+      this.ensureDefaults();
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (!stored) {
+        return [];
+      }
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        throw new Error('Invalid announcement payload');
+      }
+      return parsed.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch (error) {
+      const defaults = this.defaultAnnouncements();
+      this.save(defaults);
+      return defaults;
+    }
+  },
+
+  save(list) {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list.slice(0, 10)));
+  },
+
+  add(entry) {
+    const updated = [entry, ...this.list()];
+    this.save(updated);
+    return updated;
+  },
+
+  remove(timestamp) {
+    const filtered = this.list().filter(item => item.timestamp !== timestamp);
+    this.save(filtered);
+    return filtered;
+  }
+};
+
 // ==================== Navigation Utilities ====================
 const Navigation = {
   /**
@@ -65,6 +133,7 @@ function goToAdminInterface() { Navigation.goTo('adminInt'); }
 function goToAddRecord() { Navigation.goTo('addrecord'); }
 function goToMembers() { Navigation.goTo('members'); }
 function goToViewRecord() { Navigation.goTo('adminrecord'); }
+function goToAnnouncement() { Navigation.goTo('announcement'); }
 
 // ==================== Toast Notification System ====================
 const Toast = {

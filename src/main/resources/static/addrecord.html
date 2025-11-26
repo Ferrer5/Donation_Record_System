@@ -30,65 +30,68 @@
   </header>
 
   <main class="main-container1">
-    <div id="record-container">
-    <div class="record-header">
-      <h1>Add New Record</h1>
-    </div>
-
-    <form id="addRecordForm" onsubmit="event.preventDefault(); submitAddRecord();">
-      <div id="record-body">
-        <div class="record-field">
-          <label for="donorName">Donor's Name:</label>
-          <input type="text" id="donorName" name="donorName" placeholder="Enter donor name" required>
+    <section id="record-container" class="admin-card record-card">
+      <div class="record-header">
+        <div>
+          <p class="eyebrow-text">Administrator Toolkit</p>
+          <h1>Add Donation Record</h1>
+          <p class="helper-text">Auto-approve trusted entries and keep the dashboard in sync.</p>
         </div>
-
-        <div class="record-field">
-          <label for="donorEmail">Donor's Email:</label>
-          <input type="email" id="donorEmail" name="donorEmail" placeholder="Enter email (optional)">
-        </div>
-
-        <div class="record-field">
-          <label for="username">Username (if donor has account):</label>
-          <input type="text" id="username" name="username" placeholder="Enter username (optional - leave blank for system record)">
-        </div>
-
-        <div class="record-field">
-          <label for="donationType">Donation Type:</label>
-          <select id="donationType" name="donationType" onchange="toggleOtherField()" required>
-            <option value="" disabled selected>Select donation type</option>
-            <option value="Cash">Cash</option>
-            <option value="Goods">Goods</option>
-            <option value="Food">Food</option>
-            <option value="Others">Others</option>
-          </select>
-          <input type="text" id="otherDonation" name="otherDonation" placeholder="Please specify (e.g., food, clothes)" style="display: none; margin-top: 10px;">
-        </div>
-
-        <div class="record-field" id="amountField">
-          <label for="amount">Amount (₱):</label>
-          <input type="number" id="amount" name="amount" placeholder="Enter amount in ₱" min="0" step="0.01">
-        </div>
-
-        <div class="record-field" id="itemsField" style="display: none;">
-          <label for="itemsDescription">Number of Items:</label>
-          <input type="text" id="itemsDescription" name="itemsDescription" placeholder="e.g. 10kg rice">
-        </div>
-
-        <div class="record-field">
-          <label for="message">Message (optional):</label>
-          <textarea id="message" name="message" rows="3" placeholder="Additional notes..."></textarea>
-        </div>
+        <button class="x-btn" onclick="goBack()" aria-label="Close add record view">
+          <img src="images/458594.png" alt="Close">
+        </button>
       </div>
 
-      <div class="record-footer">
-        <button type="submit" id="confirmBtn">CONFIRM</button>
-      </div>
-    </form>
-    
-    <button class="x-btn" onclick="goBack()">
-      <img src="images/458594.png" alt="Close">
-    </button>
-  </div>
+      <form id="addRecordForm" class="record-form" onsubmit="event.preventDefault(); submitAddRecord();">
+        <div class="form-grid">
+          <div class="record-field">
+            <label for="donorName">Donor's Name</label>
+            <input type="text" id="donorName" name="donorName" placeholder="e.g. Maria Santos" required>
+          </div>
+
+          <div class="record-field">
+            <label for="donorEmail">Donor's Email</label>
+            <input type="email" id="donorEmail" name="donorEmail" placeholder="Optional contact">
+          </div>
+
+          <div class="record-field">
+            <label for="username">Linked Username</label>
+            <input type="text" id="username" name="username" placeholder="Existing user account (optional)">
+          </div>
+
+          <div class="record-field">
+            <label for="donationType">Donation Type</label>
+            <select id="donationType" name="donationType" onchange="toggleOtherField()" required>
+              <option value="" disabled selected>Select donation type</option>
+              <option value="Cash">Cash</option>
+              <option value="Goods">Goods</option>
+              <option value="Food">Food</option>
+              <option value="Others">Others</option>
+            </select>
+            <input type="text" id="otherDonation" name="otherDonation" class="stacked-input" placeholder="Please specify (e.g., hygiene kits)" style="display:none;">
+          </div>
+
+          <div class="record-field amount-field" id="amountField">
+            <label for="amount">Amount (₱)</label>
+            <input type="number" id="amount" name="amount" placeholder="0.00" min="0" step="0.01">
+          </div>
+
+          <div class="record-field" id="itemsField" style="display: none;">
+            <label for="itemsDescription">Items / Quantity</label>
+            <input type="text" id="itemsDescription" name="itemsDescription" placeholder="e.g. 15 relief packs">
+          </div>
+        </div>
+
+        <div class="record-field full-width">
+          <label for="message">Internal Notes</label>
+          <textarea id="message" name="message" rows="3" placeholder="Add instructions, recipients, or drop-off details..."></textarea>
+        </div>
+
+        <div class="record-footer">
+          <button type="submit" id="confirmBtn" class="red-btn">Save Record</button>
+        </div>
+      </form>
+    </section>
   </main>
 
   <footer class="main-footer">
