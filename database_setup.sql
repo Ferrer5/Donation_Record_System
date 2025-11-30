@@ -1,10 +1,5 @@
 USE project2;
 
--- Drop existing donations table if you want to recreate it (WARNING: This deletes all data)
--- DROP TABLE IF EXISTS donation_history;
--- DROP TABLE IF EXISTS donations;
-
--- Users table (keep as is)
 CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL PRIMARY KEY,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -12,7 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Admin table (keep as is)
 CREATE TABLE IF NOT EXISTS admin (
     admin_name VARCHAR(50) NOT NULL PRIMARY KEY,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -20,7 +14,6 @@ CREATE TABLE IF NOT EXISTS admin (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Updated Donations table to match Donation entity
 CREATE TABLE IF NOT EXISTS donations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
@@ -34,7 +27,6 @@ CREATE TABLE IF NOT EXISTS donations (
     FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
--- Donation history table (keep as is)
 CREATE TABLE IF NOT EXISTS donation_history (
     username VARCHAR(50) NOT NULL,
     old_amount DECIMAL(10,2),
@@ -45,7 +37,6 @@ CREATE TABLE IF NOT EXISTS donation_history (
     FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
--- Announcements table (keep as is)
 CREATE TABLE IF NOT EXISTS announcements (
     admin_name VARCHAR(50) NOT NULL,
     title VARCHAR(100) NOT NULL,
@@ -54,7 +45,6 @@ CREATE TABLE IF NOT EXISTS announcements (
     FOREIGN KEY (admin_name) REFERENCES admin(admin_name) ON DELETE CASCADE
 );
 
--- Insert sample users
 INSERT INTO users (username, email, password)
 VALUES 
 ('leandro', 'leandro@example.com', 'pass123'),
@@ -64,14 +54,12 @@ VALUES
 ('janrey', 'janrey@example.com', 'janreypass')
 ON DUPLICATE KEY UPDATE email=email;
 
--- Insert sample admins
 INSERT INTO admin (admin_name, email, password)
 VALUES
 ('admin_leandro', 'leandro_admin@example.com', 'admin123'),
 ('admin_jed', 'jed_admin@example.com', 'adminpass')
 ON DUPLICATE KEY UPDATE email=email;
 
--- Insert sample donations (updated to match new structure)
 INSERT INTO donations (username, full_name, email, donation_type, amount, message, status)
 VALUES
 ('leandro', 'Leandro User', 'leandro@example.com', 'Cash', 1000.00, 'For school charity', 'APPROVED'),
@@ -81,7 +69,6 @@ VALUES
 ('janrey', 'Janrey User', 'janrey@example.com', 'Food', 300.00, 'Local youth program', 'PENDING')
 ON DUPLICATE KEY UPDATE amount=amount;
 
--- Insert donation history
 INSERT INTO donation_history (username, old_amount, new_amount, action_type, remarks)
 VALUES
 ('leandro', NULL, 1000.00, 'INSERT', 'Initial donation'),
@@ -91,7 +78,6 @@ VALUES
 ('janrey', NULL, 300.00, 'INSERT', 'First donation')
 ON DUPLICATE KEY UPDATE remarks=remarks;
 
--- Insert announcements
 INSERT INTO announcements (admin_name, title, message)
 VALUES
 ('admin_leandro', 'New Donation Drive', 'Join our charity event this coming Saturday!'),

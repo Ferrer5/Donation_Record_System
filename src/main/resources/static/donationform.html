@@ -28,11 +28,11 @@
     </div>
   </header>
 
-  <div class="donation-form-container">
+  <div class="donation-form-container" id="dnf">
     <button class="x-btn" onclick="goBack()">
       <img src="images/458594.png" alt="Close">
     </button>
-    <h2>Make a Donation</h2>
+    <h2 id="cDon">Make a Donation</h2>
     <form class="donation-form" id="donationForm" onsubmit="event.preventDefault(); submitDonation(event);">
      <label for="fullname">Full Name:</label>
      <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
@@ -42,12 +42,13 @@
 
      <label for="type">Donation Type:</label>
       <select id="type" name="type" required onchange="handleDonationTypeChange()">
-        <option value="">Select donation type...</option>
+        <option value="" disabled selected>Select donation type...</option>
         <option value="Cash">Cash</option>
         <option value="Goods">Goods</option>
         <option value="Food">Food</option>
         <option value="Others">Others</option>
       </select>
+      <input type="text" id="otherDonation" name="otherDonation" class="stacked-input" placeholder="Please specify (e.g., hygiene kits)" style="display:none; margin-top:8px;">
 
      <div id="amountField" style="display: none;">
        <label for="amount">Donation Amount (₱):</label>

@@ -1,9 +1,5 @@
 USE project2;
 
--- Migration script: Update existing donations table to match new structure
--- This preserves existing data
-
--- Step 1: Add new columns if they don't exist
 ALTER TABLE donations 
 ADD COLUMN IF NOT EXISTS id BIGINT AUTO_INCREMENT PRIMARY KEY FIRST,
 ADD COLUMN IF NOT EXISTS full_name VARCHAR(100) AFTER username,
@@ -13,9 +9,6 @@ ADD COLUMN IF NOT EXISTS message TEXT AFTER amount,
 ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'PENDING' AFTER message,
 ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER status;
 
--- Step 2: Rename existing columns to match new structure
--- Note: MySQL doesn't support IF EXISTS for ALTER TABLE, so we'll check manually
--- If donation_amount exists, rename it to amount
 SET @dbname = DATABASE();
 SET @tablename = "donations";
 SET @columnname = "donation_amount";
@@ -34,7 +27,6 @@ PREPARE alterIfExists FROM @preparedStatement;
 EXECUTE alterIfExists;
 DEALLOCATE PREPARE alterIfExists;
 
--- If donation_date exists, rename it to created_at
 SET @columnname = "donation_date";
 SET @preparedStatement = (SELECT IF(
   (
@@ -51,7 +43,6 @@ PREPARE alterIfExists FROM @preparedStatement;
 EXECUTE alterIfExists;
 DEALLOCATE PREPARE alterIfExists;
 
--- If remarks exists, rename it to message
 SET @columnname = "remarks";
 SET @preparedStatement = (SELECT IF(
   (
@@ -68,7 +59,6 @@ PREPARE alterIfExists FROM @preparedStatement;
 EXECUTE alterIfExists;
 DEALLOCATE PREPARE alterIfExists;
 
--- Step 3: Update existing rows with default values for new columns
 UPDATE donations 
 SET 
     full_name = COALESCE(full_name, username),

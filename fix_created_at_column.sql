@@ -1,7 +1,5 @@
--- Fix created_at column in donations table
 USE project2;
 
--- Check if created_at column exists, if not add it
 SET @dbname = DATABASE();
 SET @tablename = "donations";
 SET @columnname = "created_at";

@@ -1,8 +1,5 @@
 USE project2;
 
--- Rename donation_amount to amount if it exists
--- This script checks if the column exists and renames it
-
 SET @dbname = DATABASE();
 SET @tablename = "donations";
 SET @columnname = "donation_amount";

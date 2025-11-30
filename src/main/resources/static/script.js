@@ -1,10 +1,3 @@
-/**
- * Donation System - Main JavaScript File
- * Handles navigation, API calls, and UI interactions
- */
-
-// ==================== Configuration ====================
-// Automatically detect if running locally or in production
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = isLocalhost 
   ? 'http://localhost:8080/api' 
@@ -16,7 +9,6 @@ const CONFIG = {
   REDIRECT_DELAY: 1000
 };
 
-// ==================== Announcement Utilities ====================
 const AnnouncementBoard = {
   STORAGE_KEY: 'adminAnnouncements',
 
@@ -84,49 +76,57 @@ const AnnouncementBoard = {
   }
 };
 
-// ==================== Navigation Utilities ====================
 const Navigation = {
-  /**
-   * Navigate to a specific page
-   * @param {string} page - The HTML page to navigate to
-   */
   goTo(page) {
     window.location.href = `${page}.html`;
   },
 
-  /**
-   * Navigate back in browser history
-   */
   goBack() {
     window.history.back();
   },
 
-  /**
-   * Navigate to home page
-   */
   goHome() {
     this.goTo('index');
   }
 };
 
-// Navigation functions for backward compatibility
 function goToSignUp() { Navigation.goTo('signup'); }
 function goBack() { Navigation.goBack(); }
 function goToLogin() { Navigation.goTo('login'); }
 function goHome() { Navigation.goHome(); }
 function goToForgot() { Navigation.goTo('forgot'); }
 async function goToForgot1() { 
-  // Send verification code before navigating
   await PasswordReset.requestCode();
 }
 async function goToChangepass() { 
-  // Verify code before navigating to change password
   await PasswordReset.verifyCode();
 }
 function goToSuccChanged() { Navigation.goTo('succChanged'); }
 function goToAdminLogin() { Navigation.goTo('adminlogin'); }
 function goToUserInt() { Navigation.goTo('userInt'); }
-function goToNotif() { Navigation.goTo('notification'); }
+function goToNotif() {
+  // Route directly based on user role to avoid unexpected redirects.
+  try {
+    const adminUser = localStorage.getItem('adminUser');
+    const username = localStorage.getItem('currentUser');
+    if (adminUser) {
+      Navigation.goTo('adminnotification');
+      return;
+    }
+    if (username) {
+      Navigation.goTo('usernotification');
+      return;
+    }
+    // Fallback to login if no user is present
+    Navigation.goTo('login');
+  } catch (err) {
+    console.error('Error routing to notifications:', err);
+    Navigation.goTo('notification');
+  }
+}
+function goToUserNotif() {
+  Navigation.goTo('usernotification');
+}
 function goToUserHistory() { Navigation.goTo('userhistory'); }
 function goToDonationForm() { Navigation.goTo('donationform'); }
 function goToAdminInterface() { Navigation.goTo('adminInt'); }
@@ -135,7 +135,6 @@ function goToMembers() { Navigation.goTo('members'); }
 function goToViewRecord() { Navigation.goTo('adminrecord'); }
 function goToAnnouncement() { Navigation.goTo('announcement'); }
 
-// ==================== Toast Notification System ====================
 const Toast = {
   /**
    * Show a toast notification
@@ -143,19 +142,15 @@ const Toast = {
    * @param {string} type - The type of toast ('success' or 'error')
    */
   show(message, type = 'error') {
-    // Remove any existing toast
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
       existingToast.remove();
     }
-
-    // Create new toast element
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    // Auto-remove after duration
     setTimeout(() => {
       toast.remove();
     }, CONFIG.TOAST_DURATION);
@@ -178,7 +173,6 @@ const Toast = {
   }
 };
 
-// ==================== API Utilities ====================
 const API = {
   /**
    * Make an API request
@@ -222,6 +216,24 @@ const API = {
       method: 'POST',
       body: JSON.stringify(data)
     });
+  }
+  ,
+  /**
+   * Get announcements from server
+   */
+  async getAnnouncements() {
+    try {
+      return await this.request('/announcements');
+    } catch (err) {
+      console.warn('Failed to fetch announcements from API, falling back to local storage', err);
+      throw err;
+    }
+  },
+  /**
+   * Delete an announcement by id
+   */
+  async deleteAnnouncement(id) {
+    return this.request(`/announcements/${id}`, { method: 'DELETE' });
   }
 };
 
@@ -368,16 +380,10 @@ function loginUser() {
   Auth.login();
 }
 
-/**
- * Signup user - called from signup form
- */
 function signupUser() {
   Auth.signup();
 }
 
-/**
- * Admin login - called from admin login form
- */
 function adminLogin() {
   AdminAuth.login();
 }
@@ -391,17 +397,14 @@ function showToast(message, type = 'error') {
   Toast.show(message, type);
 }
 
-// ==================== Donation Functions ====================
 const Donation = {
-  /**
-   * Handle donation type change to show/hide appropriate fields
-   */
   handleTypeChange() {
     const typeSelect = document.getElementById('type');
     const amountField = document.getElementById('amountField');
     const itemsField = document.getElementById('itemsField');
     const amountInput = document.getElementById('amount');
     const itemsInput = document.getElementById('numberOfItems');
+    const otherDonationField = document.getElementById('otherDonation');
     
     if (!typeSelect || !amountField || !itemsField) {
       return;
@@ -409,27 +412,30 @@ const Donation = {
     
     const selectedType = typeSelect.value;
     
-    // Hide both fields initially
-    amountField.style.display = 'none';
-    itemsField.style.display = 'none';
+    if (amountField) amountField.style.display = 'none';
+    if (itemsField) itemsField.style.display = 'none';
+    if (otherDonationField) otherDonationField.style.display = 'none';
     
-    // Remove required attribute from both inputs
     if (amountInput) amountInput.removeAttribute('required');
     if (itemsInput) itemsInput.removeAttribute('required');
+    if (otherDonationField) otherDonationField.removeAttribute('required');
     
-    // Clear values when switching types
     if (amountInput) amountInput.value = '';
     if (itemsInput) itemsInput.value = '';
+    if (otherDonationField) otherDonationField.value = '';
     
-    // Show appropriate field based on selection
     if (selectedType === 'Cash') {
-      amountField.style.display = 'block';
+      if (amountField) amountField.style.display = 'block';
       if (amountInput) amountInput.setAttribute('required', 'required');
     } else if (selectedType === 'Goods') {
-      itemsField.style.display = 'block';
+      if (itemsField) itemsField.style.display = 'block';
       if (itemsInput) itemsInput.setAttribute('required', 'required');
+    } else if (selectedType === 'Others') {
+      if (otherDonationField) {
+        otherDonationField.style.display = 'block';
+        otherDonationField.setAttribute('required', 'required');
+      }
     }
-    // For Food and Others, neither field is shown (user can use message field)
   },
 
   /**
@@ -455,8 +461,7 @@ const Donation = {
     const type = FormUtils.getValue('type');
     const amountInput = document.getElementById('amount');
     const itemsInput = document.getElementById('numberOfItems');
-    
-    // Validate based on donation type
+
     if (type === 'Cash') {
       const amount = FormUtils.getValue('amount');
       if (!amount || parseFloat(amount) <= 0) {
@@ -475,7 +480,6 @@ const Donation = {
       'fullname', 'email', 'message'
     ]);
 
-    // Get amount or items based on type
     let amount = 0;
     let itemsDescription = '';
     
@@ -483,18 +487,14 @@ const Donation = {
       amount = parseFloat(FormUtils.getValue('amount'));
     } else if (type === 'Goods') {
       itemsDescription = FormUtils.getValue('numberOfItems');
-      // For goods, we'll store the description in the amount field as 0
-      // and append it to the message, or we could modify backend
-      // For now, let's store it in message field
     }
 
     try {
-      // For Goods, combine items description with message
+
       const finalMessage = type === 'Goods' && itemsDescription 
         ? `Items: ${itemsDescription}${message ? '\n\n' + message : ''}`
         : message || '';
       
-      // For Goods, send 0 as amount (backend expects a number)
       const amountToSend = type === 'Cash' ? amount : 0;
 
       const data = await API.post('/donations/submit', {
@@ -509,11 +509,8 @@ const Donation = {
       Toast.show(data.message, data.success ? 'success' : 'error');
       
       if (data.success) {
-        // Reset form
         document.getElementById('donationForm').reset();
-        // Hide fields after reset
         this.handleTypeChange();
-        // Redirect to user interface after a delay
         setTimeout(() => {
           Navigation.goTo('userInt');
         }, CONFIG.REDIRECT_DELAY);
@@ -813,47 +810,249 @@ function showAbout() {
         'Developed by CTU Ginatilan Students.\n\n' +
         '© 2025 All Rights Reserved');
 }
-
-/**
- * Handle user logout
- */
 function handleLogout() {
-  toggleSettingsMenu(); // Close menu
+  toggleSettingsMenu();
   
   if (confirm('Are you sure you want to log out?')) {
-    // Clear user data
     localStorage.removeItem('currentUser');
     localStorage.removeItem('resetUsername');
     localStorage.removeItem('resetCode');
     
-    // Redirect to home page
     Navigation.goHome();
   }
 }
 
-/**
- * Handle admin logout
- */
 function handleAdminLogout() {
-  toggleSettingsMenu(); // Close menu
+  toggleSettingsMenu(); 
   
   if (confirm('Are you sure you want to log out?')) {
-    // Clear admin data
     localStorage.removeItem('adminUser');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('resetUsername');
     localStorage.removeItem('resetCode');
     
-    // Redirect to home page
     Navigation.goHome();
   }
 }
 
+// ==================== Notification Functions ====================
 /**
- * Handle account deletion
+ * Load user notifications (only their own donations with PENDING or APPROVED status)
+ * @param {string} username - Username to load notifications for
  */
+async function loadUserNotifications(username) {
+  const container = document.getElementById('notificationsContainer');
+  const loadingMessage = document.getElementById('loadingMessage');
+  if (loadingMessage) loadingMessage.remove();
+
+  try {
+    // Fetch user's donations
+    const donations = await Donation.getUserDonations(username);
+    
+    // Filter to only show PENDING or APPROVED statuses for this user
+    const relevant = donations.filter(d => d.status === 'PENDING' || d.status === 'APPROVED');
+
+    if (relevant.length === 0) {
+      container.innerHTML = '<div class="notif-box"><p>No donations yet. Your donations (pending or approved) will appear here.</p></div>';
+      renderAnnouncementNotifications(container, '📢 Community Announcements');
+      return;
+    }
+
+    // Separate pending and approved for better organization
+    const pending = relevant.filter(d => d.status === 'PENDING');
+    const approved = relevant.filter(d => d.status === 'APPROVED');
+
+    let html = '';
+    if (pending.length > 0) {
+      html += '<h3 style="color: #fff; margin: 15px 0 10px 0; font-size: 1.1rem;">⏳ Pending Donations</h3>';
+      html += pending.map(donation => formatUserNotification(donation, true)).join('');
+    }
+    if (approved.length > 0) {
+      html += '<h3 style="color: #fff; margin: 20px 0 10px 0; font-size: 1.1rem;">✅ Approved Donations</h3>';
+      html += approved.map(donation => formatUserNotification(donation, false)).join('');
+    }
+
+    container.innerHTML = html;
+    renderAnnouncementNotifications(container, '📢 Community Announcements');
+  } catch (error) {
+    console.error('Error loading user notifications:', error);
+    container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
+  }
+}
+
+/**
+ * Format a donation notification for user view
+ * @param {Object} donation - Donation object
+ * @param {boolean} isPending - Whether the donation is pending
+ * @returns {string} - Formatted HTML
+ */
+function formatUserNotification(donation, isPending) {
+  const amountDisplay = donation.donationType === 'Cash' 
+    ? Donation.formatAmount(donation.amount)
+    : donation.message ? donation.message.split('\n')[0].replace('Items: ', '') : 'N/A';
+
+  const statusText = isPending ? '⏳ Pending' : '✅ Approved';
+  const statusNote = isPending
+    ? `Your donation of <strong>${amountDisplay}</strong> (${donation.donationType}) is pending approval.`
+    : `Your donation of <strong>${amountDisplay}</strong> (${donation.donationType}) has been approved.`;
+
+  // Render full notification box (no collapse behavior)
+  return `
+    <div class="notif-box">
+      <div style="margin-bottom: 6px;"><strong>${statusText}</strong></div>
+      <div style="font-size: 0.95rem; margin-bottom: 6px;"><strong>Type:</strong> ${donation.donationType} | <strong>Amount/Items:</strong> ${amountDisplay}</div>
+      ${donation.message && donation.donationType !== 'Goods' ? `<div style="margin-bottom:6px;"> <em>${donation.message}</em></div>` : ''}
+      <div style="font-size: 0.8rem; color: #333;">Submitted: ${Donation.formatDate(donation.createdAt)}</div>
+    </div>
+  `;
+}
+
+/**
+ * Load admin notifications (all donations with pending/approved status)
+ */
+async function loadAdminNotifications() {
+  const container = document.getElementById('notificationsContainer');
+  const loadingMessage = document.getElementById('loadingMessage');
+  if (loadingMessage) loadingMessage.remove();
+
+  try {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/donations/all`);
+    const data = await response.json();
+    if (!data.success) {
+      container.innerHTML = '<div class="notif-box"><p>Error loading notifications.</p></div>';
+      return;
+    }
+
+    const donations = data.donations || [];
+    const recentDonations = donations.slice(0, 20);
+
+    if (recentDonations.length === 0) {
+      container.innerHTML = '<div class="notif-box"><p>No donations yet.</p></div>';
+      renderAnnouncementNotifications(container, '📢 Posted Announcements');
+      return;
+    }
+
+    const pending = recentDonations.filter(d => d.status === 'PENDING');
+    const approved = recentDonations.filter(d => d.status === 'APPROVED');
+
+    let html = '';
+    if (pending.length > 0) {
+      html += '<h3 style="color: #fff; margin: 15px 0 10px 0; font-size: 1.1rem;">⏳ Pending Donations</h3>';
+      html += pending.map(donation => formatAdminNotification(donation, true)).join('');
+    }
+    if (approved.length > 0) {
+      html += '<h3 style="color: #fff; margin: 20px 0 10px 0; font-size: 1.1rem;">✅ Approved Donations</h3>';
+      html += approved.map(donation => formatAdminNotification(donation, false)).join('');
+    }
+
+    container.innerHTML = html;
+    renderAnnouncementNotifications(container, '📢 Posted Announcements');
+  } catch (error) {
+    console.error('Error loading admin notifications:', error);
+    container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
+  }
+}
+
+/**
+ * Format a donation notification for admin view
+ * @param {Object} donation - Donation object
+ * @param {boolean} isPending - Whether the donation is pending
+ * @returns {string} - Formatted HTML
+ */
+function formatAdminNotification(donation, isPending) {
+  const amountDisplay = donation.donationType === 'Cash' 
+    ? Donation.formatAmount(donation.amount)
+    : donation.message ? donation.message.split('\n')[0].replace('Items: ', '') : 'N/A';
+
+  const statusBadge = isPending 
+    ? '<span style="background: #ff7b00; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">PENDING</span>'
+    : '<span style="background: #4caf50; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">APPROVED</span>';
+
+  const approveButton = isPending 
+    ? `<button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem;" onclick="approveDonationFromNotif(${donation.id})">Approve Donation</button>`
+    : '';
+
+  return `
+    <div class="notif-box" style="margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <strong>${donation.fullName}</strong>
+        ${statusBadge}
+      </div>
+      <p><strong>Type:</strong> ${donation.donationType} | <strong>Amount/Items:</strong> ${amountDisplay}</p>
+      ${donation.email ? `<p><strong>Email:</strong> ${donation.email}</p>` : ''}
+      ${donation.message && donation.donationType !== 'Goods' ? `<p><em>${donation.message}</em></p>` : ''}
+      <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
+      ${approveButton}
+    </div>
+  `;
+}
+
+/**
+ * Approve a donation from notification view
+ * @param {number} donationId - ID of donation to approve
+ */
+async function approveDonationFromNotif(donationId) {
+  const success = await Donation.approve(donationId);
+  if (success) await loadAdminNotifications();
+}
+
+/**
+ * Render announcements in notification view
+ * @param {Element} container - Container element
+ * @param {string} headingText - Heading text for announcements
+ */
+function renderAnnouncementNotifications(container, headingText) {
+  (async () => {
+    try {
+      const res = await API.getAnnouncements();
+      if (res && res.success && Array.isArray(res.announcements) && res.announcements.length) {
+        const cards = res.announcements.map(a => `
+          <div class="notif-box">
+            <p><strong>📢 ${a.title}</strong></p>
+            <p>${a.message}</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Audience: ${a.audience || 'All Donors'} • Priority: ${a.priority || 'Normal'}</p>
+            <span class="notif-time">${new Date(a.datePosted || a.timestamp || a.date_posted).toLocaleString()}</span>
+          </div>
+        `).join('');
+
+        container.insertAdjacentHTML('beforeend', `
+          <h3 style="color: #fff; margin: 25px 0 10px 0; font-size: 1.1rem;">${headingText}</h3>
+          ${cards}
+        `);
+        return;
+      }
+    } catch (err) {
+      console.warn('Announcements API not available, falling back to local storage', err);
+    }
+
+    if (!window.AnnouncementBoard) return;
+    const announcements = AnnouncementBoard.list();
+    if (!announcements.length) return;
+    const announcementCards = announcements.map(announcement => `
+      <div class="notif-box">
+        <p><strong>📢 ${announcement.title}</strong></p>
+        <p>${announcement.message}</p>
+        <p style="font-size: 0.85rem; margin-top: 8px;">Audience: ${announcement.audience} • Priority: ${announcement.priority}</p>
+        <span class="notif-time">${new Date(announcement.timestamp).toLocaleString()}</span>
+      </div>
+    `).join('');
+
+    container.insertAdjacentHTML('beforeend', `
+      <h3 style="color: #fff; margin: 25px 0 10px 0; font-size: 1.1rem;">${headingText}</h3>
+      ${announcementCards}
+    `);
+  })();
+}
+
+/**
+ * Toggle notification expansion (used by user notification cards)
+ * @param {HTMLElement} el - The notif-box element clicked
+ */
+
+
+
 async function handleDeleteAccount() {
-  toggleSettingsMenu(); // Close menu
+  toggleSettingsMenu();
   
   const username = localStorage.getItem('currentUser');
   
@@ -876,7 +1075,6 @@ async function handleDeleteAccount() {
     return;
   }
   
-  // Double confirmation
   const finalConfirm = confirm('This is your last chance. Delete account permanently?');
   if (!finalConfirm) {
     return;
@@ -888,7 +1086,6 @@ async function handleDeleteAccount() {
     Toast.show(data.message, data.success ? 'success' : 'error');
     
     if (data.success) {
-      // Clear all user data
       localStorage.clear();
       
       setTimeout(() => {

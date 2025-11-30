@@ -33,8 +33,7 @@
     <section id="record-container" class="admin-card record-card">
       <div class="record-header">
         <div>
-          <p class="eyebrow-text">Administrator Toolkit</p>
-          <h1>Add Donation Record</h1>
+          <h1 id="addr">ADD NEW RECORD</h1>
           <p class="helper-text">Auto-approve trusted entries and keep the dashboard in sync.</p>
         </div>
         <button class="x-btn" onclick="goBack()" aria-label="Close add record view">
@@ -46,7 +45,7 @@
         <div class="form-grid">
           <div class="record-field">
             <label for="donorName">Donor's Name</label>
-            <input type="text" id="donorName" name="donorName" placeholder="e.g. Maria Santos" required>
+            <input type="text" id="donorName" name="donorName" placeholder="e.g. John Ferater" required>
           </div>
 
           <div class="record-field">
@@ -54,10 +53,7 @@
             <input type="email" id="donorEmail" name="donorEmail" placeholder="Optional contact">
           </div>
 
-          <div class="record-field">
-            <label for="username">Linked Username</label>
-            <input type="text" id="username" name="username" placeholder="Existing user account (optional)">
-          </div>
+          <!-- Linked Username removed - admin will not be required to link a user account -->
 
           <div class="record-field">
             <label for="donationType">Donation Type</label>
@@ -83,7 +79,7 @@
         </div>
 
         <div class="record-field full-width">
-          <label for="message">Internal Notes</label>
+          <label for="message">NOTES</label>
           <textarea id="message" name="message" rows="3" placeholder="Add instructions, recipients, or drop-off details..."></textarea>
         </div>
 
@@ -101,7 +97,6 @@
 
   <script src="script.js"></script>
   <script>
-    // Toggle fields based on donation type
     function toggleOtherField() {
       const donationType = document.getElementById('donationType').value;
       const otherDonationField = document.getElementById('otherDonation');
@@ -110,14 +105,12 @@
       const amountInput = document.getElementById('amount');
       const itemsInput = document.getElementById('itemsDescription');
       
-      // Reset fields
       if (otherDonationField) otherDonationField.style.display = 'none';
       if (amountField) amountField.style.display = 'block';
       if (itemsField) itemsField.style.display = 'none';
       if (amountInput) amountInput.removeAttribute('required');
       if (itemsInput) itemsInput.removeAttribute('required');
       
-      // Clear values when switching
       if (amountInput) amountInput.value = '';
       if (itemsInput) itemsInput.value = '';
       
@@ -135,7 +128,6 @@
       }
     }
 
-    // Submit add record form
     async function submitAddRecord() {
       const requiredFields = ['donorName', 'donationType'];
       
@@ -147,7 +139,6 @@
       const amountInput = document.getElementById('amount');
       const itemsInput = document.getElementById('itemsDescription');
       
-      // Validate based on donation type
       if (donationType === 'Cash') {
         const amount = FormUtils.getValue('amount');
         if (!amount || parseFloat(amount) <= 0) {
@@ -164,7 +155,7 @@
 
       const donorName = FormUtils.getValue('donorName');
       const email = FormUtils.getValue('donorEmail');
-      const username = FormUtils.getValue('username');
+      const username = '';
       const amount = donationType === 'Cash' ? parseFloat(FormUtils.getValue('amount')) : 0;
       const itemsDescription = FormUtils.getValue('itemsDescription');
       const message = FormUtils.getValue('message');
@@ -185,11 +176,8 @@
         Toast.show(data.message, data.success ? 'success' : 'error');
         
         if (data.success) {
-          // Reset form
           document.getElementById('addRecordForm').reset();
-          // Reset field visibility
           toggleOtherField();
-          // Redirect to admin interface after a delay
           setTimeout(() => {
             Navigation.goTo('adminInt');
           }, CONFIG.REDIRECT_DELAY);
@@ -198,8 +186,6 @@
         Toast.error('An error occurred. Please try again.');
       }
     }
-
-    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
       toggleOtherField();
     });

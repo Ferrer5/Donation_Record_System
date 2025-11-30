@@ -58,11 +58,9 @@
 
   <script src="script.js"></script>
   <script>
-    // Load pending donations when page loads
     document.addEventListener('DOMContentLoaded', async function() {
       await loadPendingDonations();
     });
-
     async function loadPendingDonations() {
       const container = document.getElementById('pendingDonationsContainer');
       const donations = await Donation.getPendingDonations();
@@ -99,7 +97,7 @@
     async function approveDonation(donationId) {
       const success = await Donation.approve(donationId);
       if (success) {
-        await loadPendingDonations(); // Refresh the list
+        await loadPendingDonations();
       }
     }
   </script>

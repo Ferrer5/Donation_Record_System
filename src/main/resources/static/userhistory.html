@@ -52,38 +52,50 @@
 
   <script src="script.js"></script>
   <script>
-    // Load donation history when page loads
     document.addEventListener('DOMContentLoaded', async function() {
-      const username = localStorage.getItem('currentUser');
+      // Get username from URL parameters (when clicked from members page)
+      const urlParams = new URLSearchParams(window.location.search);
+      let username = urlParams.get('username');
+      
+      // Fallback to localStorage if no URL parameter (user is viewing own history)
+      if (!username) {
+        username = localStorage.getItem('currentUser');
+      }
+      
       const tbody = document.getElementById('historyTableBody');
       
       if (!username) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Please log in to view your donation history.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Please log in to view donation history.</td></tr>';
         return;
       }
 
-      const donations = await Donation.getUserDonations(username);
+      try {
+        const donations = await Donation.getUserDonations(username);
 
-      if (donations.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No donation history yet. Submit your first donation!</td></tr>';
-        return;
+        if (donations.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No donation history found for this user.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = donations.map((donation, index) => {
+          const isLastRow = index === donations.length - 1;
+          const rowId = isLastRow ? 'tabmarg' : '';
+          const statusClass = donation.status === 'APPROVED' ? 'status-approved' : 
+                             donation.status === 'PENDING' ? 'status-pending' : 'status-rejected';
+          
+          return `
+            <tr ${rowId ? `id="${rowId}"` : ''}>
+              <td>${donation.donationType}</td>
+              <td>${Donation.formatAmount(donation.amount)}</td>
+              <td>${Donation.formatDate(donation.createdAt)}</td>
+              <td><span class="${statusClass}">${donation.status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading donation history:', error);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Error loading donation history.</td></tr>';
       }
-
-      tbody.innerHTML = donations.map((donation, index) => {
-        const isLastRow = index === donations.length - 1;
-        const rowId = isLastRow ? 'tabmarg' : '';
-        const statusClass = donation.status === 'APPROVED' ? 'status-approved' : 
-                           donation.status === 'PENDING' ? 'status-pending' : 'status-rejected';
-        
-        return `
-          <tr ${rowId ? `id="${rowId}"` : ''}>
-            <td>${donation.donationType}</td>
-            <td>${Donation.formatAmount(donation.amount)}</td>
-            <td>${Donation.formatDate(donation.createdAt)}</td>
-            <td><span class="${statusClass}">${donation.status}</span></td>
-          </tr>
-        `;
-      }).join('');
     });
   </script>
 </body>

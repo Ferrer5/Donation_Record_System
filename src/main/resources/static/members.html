@@ -70,22 +70,26 @@
   </header>
 
   <main class="main-container1">
-    <section id="members-section" class="members-container">
-      <div class="top-bar">
-        <button id="backBtn" class="back-btn" type="button">←</button>
-        <div class="search-box">
-          <input id="memberSearch" type="text" placeholder="Search by username or email">
-          <button class="search-btn" type="button">🔍</button>
+    <section id="members-section" class="admin-card record-card">
+      <div class="record-header">
+        <div>
+          <p class="eyebrow-text">Community Directory</p>
+          <h1>Registered Members</h1>
+          <p class="helper-text">Live view of everyone who has created an account.</p>
         </div>
+        <button class="x-btn" id="xbtn" onclick="goToAdminInterface()" aria-label="Close members view">
+          <img src="images/458594.png" alt="Close">
+        </button>
       </div>
 
-      <header class="members-header">
-        <div>
-          <p class="eyebrow">Community Directory</p>
-          <h2 class="members-title">Registered Members</h2>
-          <p class="members-subtitle">Live view of everyone who has created an account.</p>
+      <div class="record-controls" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="search-box">
+            <input id="memberSearch" type="text" placeholder="Search by username or email">
+            <button class="search-btn" type="button">🔍</button>
+          </div>
         </div>
-        <div class="members-stats">
+        <div class="members-stats" style="display:flex; gap:12px; align-items:center;">
           <div class="stat-card">
             <span>Total Members</span>
             <strong id="memberCount">0</strong>
@@ -95,7 +99,7 @@
             <strong id="membersUpdated">–</strong>
           </div>
         </div>
-      </header>
+      </div>
 
       <div id="members-loading" class="members-state">
         <span class="spinner" aria-hidden="true"></span>
@@ -131,7 +135,7 @@
       const errorStateEl = document.getElementById("members-error");
       errorStateEl.classList.add("error");
       const searchInputEl = document.getElementById("memberSearch");
-      const backBtnEl = document.getElementById("backBtn");
+      const backBtnEl = document.getElementById("xbtn") || document.getElementById("backBtn");
       const searchBtnEl = document.querySelector(".search-btn");
 
       let members = [];
@@ -179,8 +183,12 @@
               </div>
             </div>
             <div class="member-actions">
-              <p class="member-date">${formatDate(member.createdAt)}</p>
-              <button class="history-btn" type="button" data-username="${member.username}">History</button>
+              <div style="text-align:right; margin-right:6px;">
+                <p class="member-date">${formatDate(member.createdAt)}</p>
+              </div>
+              <div>
+                <button class="history-btn" type="button" data-username="${member.username}">History</button>
+              </div>
             </div>
           `;
           fragment.appendChild(card);
@@ -227,7 +235,7 @@
         if (searchBtnEl) {
           searchBtnEl.addEventListener("click", filterMembers);
         }
-        backBtnEl.addEventListener("click", () => window.history.back());
+        if (backBtnEl) { backBtnEl.addEventListener("click", () => window.history.back()); }
         membersListEl.addEventListener("click", (event) => {
           const button = event.target.closest(".history-btn");
           if (!button) {

@@ -114,7 +114,39 @@
       }[priority] || 'priority-normal';
     }
 
-    function renderAnnouncements() {
+    async function renderAnnouncements() {
+      try {
+        // Try server first
+        const res = await API.getAnnouncements();
+        if (res && res.success && Array.isArray(res.announcements) && res.announcements.length) {
+          const announcements = res.announcements;
+          announcementListEl.innerHTML = announcements
+            .map(a => `
+              <article class="announcement-item">
+                <header>
+                  <div>
+                    <h2>${a.title}</h2>
+                    <p class="meta">${new Date(a.datePosted || a.timestamp || a.date_posted).toLocaleString()} • Audience: ${a.audience || 'All Donors'}</p>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                    <span class="priority-badge ${priorityClass(a.priority || 'Normal')}">${a.priority || 'Normal'}</span>
+                    <button type="button" class="delete-announcement-btn" onclick="deleteAnnouncementById(${a.id})">Delete</button>
+                  </div>
+                </header>
+                <p>${a.message}</p>
+                <footer>
+                  <span>Posted by ${a.adminName || a.author || 'Administrator'}</span>
+                </footer>
+              </article>
+            `).join('');
+          return;
+        }
+      } catch (err) {
+        // fallback to local AnnouncementBoard
+        console.warn('Server announcements unavailable, falling back to local list', err);
+      }
+
+      // Local fallback
       const announcements = AnnouncementBoard.list();
       if (!announcements.length) {
         announcementListEl.innerHTML = '<div class="announcement-empty">No announcements yet. Create one on the left.</div>';
@@ -127,9 +159,7 @@
             <header>
               <div>
                 <h2>${announcement.title}</h2>
-                <p class="meta">
-                  ${new Date(announcement.timestamp).toLocaleString()} • Audience: ${announcement.audience}
-                </p>
+                <p class="meta">${new Date(announcement.timestamp).toLocaleString()} • Audience: ${announcement.audience}</p>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
                 <span class="priority-badge ${priorityClass(announcement.priority)}">${announcement.priority}</span>
@@ -145,7 +175,7 @@
         .join('');
     }
 
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
       event.preventDefault();
       const title = document.getElementById('announcementTitle').value.trim();
       const message = document.getElementById('announcementMessage').value.trim();
@@ -157,22 +187,47 @@
         return;
       }
 
-      const newAnnouncement = {
+      const payload = {
         title,
         message,
         audience,
         priority,
-        author: localStorage.getItem('adminUser') || 'Administrator',
-        timestamp: new Date().toISOString()
+        author: localStorage.getItem('adminUser') || 'Administrator'
       };
 
-      AnnouncementBoard.add(newAnnouncement);
-      renderAnnouncements();
-      form.reset();
-      Toast.success('Announcement posted successfully.');
+      try {
+        await API.post('/announcements', payload);
+        // Also keep local fallback copy for immediate client-side behavior
+        AnnouncementBoard.add({ ...payload, timestamp: new Date().toISOString() });
+        await renderAnnouncements();
+        form.reset();
+        Toast.success('Announcement posted successfully.');
+      } catch (err) {
+        // Fallback to local only
+        AnnouncementBoard.add({ ...payload, timestamp: new Date().toISOString() });
+        renderAnnouncements();
+        form.reset();
+        Toast.success('Announcement posted locally (server unavailable).');
+      }
     });
 
     document.addEventListener('DOMContentLoaded', renderAnnouncements);
+
+    async function deleteAnnouncementById(id) {
+      if (!confirm('Delete this announcement?')) return;
+      try {
+        await API.deleteAnnouncement(id);
+        // Also remove from local storage fallback
+        if (window.AnnouncementBoard) {
+          const list = AnnouncementBoard.list().filter(a => a.timestamp !== undefined && a.timestamp !== null && String(a.id) !== String(id));
+          AnnouncementBoard.save(list);
+        }
+        await renderAnnouncements();
+        Toast.success('Announcement deleted.');
+      } catch (err) {
+        Toast.error('Failed to delete announcement on server.');
+      }
+    }
 
     function deleteAnnouncement(timestamp) {
       AnnouncementBoard.remove(timestamp);

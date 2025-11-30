@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Donation Record System</title>
+  <title>Your Notifications - Donation Record System</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="body1">
@@ -29,27 +29,17 @@
   </header>
 
   <main class="main-container1">
-    <div class="welcome-card">
-      <h1 id="welc">WELCOME!</h1> 
-      <p id="welc1">
-        Hello, <strong id="username-display">User</strong>!<br>
-        You're now logged in to the <b>Donation Report System</b>.<br>
-        From here, you can manage donations, track information, <br> 
-        and generate detailed reports. Let's continue making every <br>
-        contribution count!
-      </p>
-      <h1 id="welc3">God Bless</h1>
+    <div class="welcome-card" id="welc-card">
+      <h1 id="welc">Your Notifications</h1>
 
-      <div class="button-group">
-        <button id="Bdonate" class="styled-btn donate" onclick="goToDonationForm()">Donate</button>
-        <button id="Bhistory" class="styled-btn history" onclick="goToUserHistory()">History</button>
+      <div class="notifications" id="notificationsContainer">
+        <div class="loading-message" id="loadingMessage">Loading notifications...</div>
       </div>
 
-      <button class="notif-btn" onclick="goToUserNotif()">
-        <img src="images/notif-icon.png" alt="Notifications">
+      <button class="x-btn" id="xbtn" onclick="goBack()">
+        <img src="images/458594.png" alt="Close">
       </button>
     </div>
-    
   </main>
 
   <footer class="main-footer">
@@ -58,5 +48,18 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      const username = localStorage.getItem('currentUser');
+
+      if (!username) {
+        document.getElementById('notificationsContainer').innerHTML =
+          '<div class="notif-box"><p>Please log in to view your notifications.</p></div>';
+        return;
+      }
+
+      await loadUserNotifications(username);
+    });
+  </script>
 </body>
 </html>

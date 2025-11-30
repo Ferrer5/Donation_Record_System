@@ -6,10 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
 
-/**
- * Service to manage password reset verification codes
- * Stores codes in-memory with expiration (10 minutes)
- */
 @Service
 public class PasswordResetService {
 
