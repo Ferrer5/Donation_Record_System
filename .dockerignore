@@ -1,0 +1,39 @@
+# Maven
+target/
+!target/*.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local configuration files
+application-*.properties
+!application-production.properties
+
+# Git
+.git/
+.gitignore
+
+# Database files
+*.db
+*.sql
+
+# Build files
+mvnw
+mvnw.cmd
+.mvn/
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~
