@@ -1,10 +1,10 @@
-# Use official OpenJDK 17 image as base
-FROM eclipse-temurin:17-jdk-jammy as builder
+# Use official OpenJDK 21 image as base (matches your pom.xml)
+FROM eclipse-temurin:21-jammy as builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy the gradle files first to leverage Docker cache
+# Copy Maven wrapper and POM
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
@@ -13,13 +13,13 @@ COPY pom.xml .
 RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
-COPY src src
+COPY src ./src
 
 # Build the application
-RUN ./mvnw package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
-# Use a smaller runtime image
-FROM eclipse-temurin:17-jre-jammy
+# Use a smaller JRE image for production
+FROM eclipse-temurin:21-jre-jammy
 
 # Set working directory
 WORKDIR /app
@@ -27,11 +27,13 @@ WORKDIR /app
 # Copy the JAR file from the builder stage
 COPY --from=builder /app/target/donation-report-system-*.jar app.jar
 
-# Copy the production properties file
+# Create config directory and copy production properties
+RUN mkdir -p /app/config
 COPY src/main/resources/application-production.properties /app/config/
 
 # Expose the port the app runs on
-EXPOSE 8080
+# Railway uses $PORT environment variable
+EXPOSE ${PORT:-8080}
 
 # Set the command to run the application
-ENTRYPOINT ["java", "-Dspring.profiles.active=production", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Dspring.profiles.active=production -jar app.jar"]
