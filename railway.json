@@ -3,16 +3,47 @@
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "mvn clean package -DskipTests",
-    "startCommand": "java -Dspring.profiles.active=production -jar target/donation-report-system-1.0.0.jar"
+    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=production -jar target/donation-report-system-1.0.0.jar"
   },
   "deploy": {
-    "startCommand": "java -Dspring.profiles.active=production -jar target/donation-report-system-1.0.0.jar",
+    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=production -jar target/donation-report-system-1.0.0.jar",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 10,
+    "public": true
   },
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
   "checks": {
     "enabled": true,
     "timeout": 180,
-    "interval": "30s"
+    "interval": "30s",
+    "path": "/"
+  },
+  "probes": {
+    "liveness": {
+      "enabled": true,
+      "path": "/actuator/health",
+      "initialDelaySeconds": 30,
+      "timeoutSeconds": 10,
+      "periodSeconds": 30,
+      "successThreshold": 1,
+      "failureThreshold": 3
+    },
+    "readiness": {
+      "enabled": true,
+      "path": "/actuator/health",
+      "initialDelaySeconds": 5,
+      "timeoutSeconds": 5,
+      "periodSeconds": 10,
+      "successThreshold": 1,
+      "failureThreshold": 3
+    }
   }
 }
