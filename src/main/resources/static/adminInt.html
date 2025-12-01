@@ -85,10 +85,16 @@
             ${donation.email ? `<p><strong>Email:</strong> ${donation.email}</p>` : ''}
             ${donation.message && donation.donationType !== 'Goods' ? `<p><em>${donation.message}</em></p>` : ''}
             <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
-            <button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem; width: 100%;" 
-                    onclick="approveDonation(${donation.id})">
-              Approve Donation
-            </button>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button class="red-btn" style="padding: 8px 15px; font-size: 0.9rem; flex: 1;" 
+                      onclick="approveDonation(${donation.id})">
+                Approve
+              </button>
+              <button class="red-btn" style="padding: 8px 15px; font-size: 0.9rem; flex: 1; background-color: #dc3545;" 
+                      onclick="removeDonation(${donation.id}, this)">
+                Remove
+              </button>
+            </div>
           </div>
         `;
       }).join('');
@@ -98,6 +104,24 @@
       const success = await Donation.approve(donationId);
       if (success) {
         await loadPendingDonations();
+      }
+    }
+    
+    async function removeDonation(donationId, button) {
+      if (confirm('Are you sure you want to remove this donation? This action cannot be undone.')) {
+        const success = await Donation.remove(donationId);
+        if (success) {
+          // Remove the donation card from the UI immediately
+          const card = button.closest('.notif-box');
+          if (card) {
+            card.style.opacity = '0';
+            setTimeout(() => {
+              card.remove();
+              // Reload the list to update the UI
+              loadPendingDonations();
+            }, 300);
+          }
+        }
       }
     }
   </script>

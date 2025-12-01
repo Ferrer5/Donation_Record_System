@@ -30,18 +30,6 @@ bin/
 
 # Local development
 *.db
-
-# Local configuration
-application-local.properties
-application-dev.properties
-
-# Environment files
-.env
-*.env
-
-# Secrets
-**/secrets/
-**/config/
 *.sql
 *.h2.db
 
@@ -52,6 +40,10 @@ Thumbs.db
 # Application Properties
 application-*.properties
 !application-production.properties
+
+# Docker
+Dockerfile
+.dockerignore
 
 # Railway
 railway.json

@@ -147,6 +147,36 @@ public class DonationController {
         return response;
     }
 
+    // DELETE DONATION
+    @DeleteMapping("/{id}")
+    public Map<String, Object> deleteDonation(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (id == null) {
+                response.put("success", false);
+                response.put("message", "Invalid donation ID");
+                return response;
+            }
+            
+            if (!donationRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "Donation not found with id: " + id);
+                return response;
+            }
+            
+            donationRepository.deleteById(id);
+            
+            response.put("success", true);
+            response.put("message", "Donation removed successfully!");
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error removing donation: " + e.getMessage());
+        }
+        
+        return response;
+    }
+
     // ADMIN ADD RECORD (admin can add donation records directly, auto-approved)
     @PostMapping("/admin/add")
     public Map<String, Object> adminAddRecord(@RequestBody Map<String, Object> payload) {

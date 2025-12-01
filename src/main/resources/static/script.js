@@ -571,6 +571,26 @@ const Donation = {
   },
 
   /**
+   * Remove a pending donation
+   * @param {number} donationId - ID of donation to remove
+   * @returns {Promise<boolean>} - Success status
+   */
+  async remove(donationId) {
+    try {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/donations/${donationId}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+      Toast.show(data.message || 'Donation removed successfully', data.success ? 'success' : 'error');
+      return data.success;
+    } catch (error) {
+      console.error('Error removing donation:', error);
+      Toast.error('Error removing donation');
+      return false;
+    }
+  },
+
+  /**
    * Get user notifications (approved donations)
    * @param {string} username - Username to get notifications for
    * @returns {Promise<Array>} - Array of notifications
