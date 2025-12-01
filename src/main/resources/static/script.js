@@ -1081,18 +1081,23 @@ async function handleDeleteAccount() {
   }
   
   try {
-    const data = await API.post('/delete-account', { username });
-    
+    // Use DELETE method to match backend @DeleteMapping("/delete-account")
+    const data = await API.request('/delete-account', {
+      method: 'DELETE',
+      body: JSON.stringify({ username })
+    });
+
     Toast.show(data.message, data.success ? 'success' : 'error');
-    
+
     if (data.success) {
       localStorage.clear();
-      
+
       setTimeout(() => {
         Navigation.goHome();
       }, CONFIG.REDIRECT_DELAY);
     }
   } catch (error) {
     Toast.error('An error occurred while deleting your account. Please try again.');
+    console.error('Delete account error:', error);
   }
 }
