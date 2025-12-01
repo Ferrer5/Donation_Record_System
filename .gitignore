@@ -53,10 +53,6 @@ Thumbs.db
 application-*.properties
 !application-production.properties
 
-# Docker
-Dockerfile
-.dockerignore
-
 # Railway
 railway.json
 
