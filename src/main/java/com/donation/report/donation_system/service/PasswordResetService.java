@@ -15,33 +15,33 @@ public class PasswordResetService {
 
     /**
      * Generate and store a verification code for a user
-     * @param username Username
      * @param email Email address
      * @return Generated 6-digit code
      */
-    public String generateAndStoreCode(String username, String email) {
-        // Remove any existing code for this user
-        verificationCodes.remove(username);
+    public String generateAndStoreCode(String email) {
+        // Remove any existing code for this email
+        verificationCodes.remove(email);
         
-        // Generate random 6-digit code
+        // Generate random code using the defined length
         Random random = new Random();
-        String code = String.format("%06d", random.nextInt(1000000));
+        String code = String.format("%0" + CODE_LENGTH + "d", 
+            random.nextInt((int) Math.pow(10, CODE_LENGTH)));
         
         // Store code with expiration time
         long expirationTime = System.currentTimeMillis() + (CODE_EXPIRATION_MINUTES * 60 * 1000);
-        verificationCodes.put(username, new VerificationCode(code, email, expirationTime));
+        verificationCodes.put(email, new VerificationCode(code, expirationTime));
         
         return code;
     }
 
     /**
      * Verify if the provided code is correct and not expired
-     * @param username Username
+     * @param email Email address
      * @param code Verification code
      * @return true if code is valid, false otherwise
      */
-    public boolean verifyCode(String username, String code) {
-        VerificationCode storedCode = verificationCodes.get(username);
+    public boolean verifyCode(String email, String code) {
+        VerificationCode storedCode = verificationCodes.get(email);
         
         if (storedCode == null) {
             return false;
@@ -49,7 +49,7 @@ public class PasswordResetService {
         
         // Check if code is expired
         if (System.currentTimeMillis() > storedCode.getExpirationTime()) {
-            verificationCodes.remove(username);
+            verificationCodes.remove(email);
             return false;
         }
         
@@ -63,10 +63,10 @@ public class PasswordResetService {
 
     /**
      * Remove verification code after successful password reset
-     * @param username Username
+     * @param email Email address
      */
-    public void removeCode(String username) {
-        verificationCodes.remove(username);
+    public void removeCode(String email) {
+        verificationCodes.remove(email);
     }
 
     /**
@@ -84,21 +84,15 @@ public class PasswordResetService {
      */
     private static class VerificationCode {
         private final String code;
-        private final String email;
         private final long expirationTime;
 
-        public VerificationCode(String code, String email, long expirationTime) {
+        public VerificationCode(String code, long expirationTime) {
             this.code = code;
-            this.email = email;
             this.expirationTime = expirationTime;
         }
 
         public String getCode() {
             return code;
-        }
-
-        public String getEmail() {
-            return email;
         }
 
         public long getExpirationTime() {

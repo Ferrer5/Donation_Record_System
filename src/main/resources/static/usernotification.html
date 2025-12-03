@@ -49,6 +49,94 @@
 
   <script src="script.js"></script>
   <script>
+    async function loadUserNotifications(username) {
+      const container = document.getElementById('notificationsContainer');
+      const loadingMessage = document.createElement('div');
+      loadingMessage.id = 'loadingMessage';
+      loadingMessage.textContent = 'Loading notifications...';
+      container.innerHTML = '';
+      container.appendChild(loadingMessage);
+
+      try {
+        // Fetch both donations and announcements in parallel
+        const [donationsResponse, announcementsResponse] = await Promise.all([
+          Donation.getUserDonations(username).catch(() => []),
+          API.getAnnouncements().catch(() => ({ announcements: [] }))
+        ]);
+
+        // Process donations with proper timestamp handling
+        const relevantDonations = (donationsResponse || [])
+          .filter(d => d.status === 'PENDING' || d.status === 'APPROVED')
+          .map(d => {
+            // Ensure we have a valid date for sorting
+            let sortDate = d.updatedAt || d.createdAt;
+            if (d.status === 'APPROVED' && d.approvalDate) {
+              sortDate = d.approvalDate;
+            } else if (d.donationDate) {
+              sortDate = d.donationDate;
+            }
+            return {
+              ...d,
+              type: 'donation',
+              sortDate: sortDate
+            };
+          });
+
+        // Process announcements with proper timestamp handling
+        const announcements = (announcementsResponse?.announcements || [])
+          .map(a => ({
+            ...a,
+            type: 'announcement',
+            sortDate: a.datePosted || a.timestamp || a.date_posted || a.createdAt || new Date().toISOString()
+          }));
+
+        // Combine and sort by date (newest first) with proper date handling
+        const allItems = [...relevantDonations, ...announcements]
+          .filter(item => item.sortDate) // Filter out items without a sort date
+          .sort((a, b) => {
+            // Convert to timestamps for reliable comparison
+            const dateA = new Date(a.sortDate).getTime();
+            const dateB = new Date(b.sortDate).getTime();
+            return dateB - dateA; // Sort newest first
+          });
+
+        if (allItems.length === 0) {
+          container.innerHTML = '<div class="notif-box"><p>No notifications yet.</p></div>';
+          return;
+        }
+
+        // Render all items
+        let html = '';
+        allItems.forEach(item => {
+          if (item.type === 'donation') {
+            const isPending = item.status === 'PENDING';
+            html += formatUserNotification(item, isPending);
+          } else {
+            // Format announcement
+            html += `
+              <div class="notif-box" style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <strong>📢 ${item.title || 'Announcement'}</strong>
+                  <span style="background: #4a90e2; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem;">ANNOUNCEMENT</span>
+                </div>
+                <p>${item.message || ''}</p>
+                <p class="announcement-meta" style="font-size: 0.85rem; margin-top: 8px; color: #000000 !important;">
+                  ${item.audience ? `Audience: ${item.audience} • ` : ''}${item.priority ? `Priority: ${item.priority}` : ''}
+                </p>
+                <span class="notif-time">${item.sortDate ? new Date(item.sortDate).toLocaleString() : ''}</span>
+              </div>
+            `;
+          }
+        });
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+        container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async function() {
       const username = localStorage.getItem('currentUser');
 

@@ -310,28 +310,56 @@ const Auth = {
   },
 
   /**
+   * Check if a field has a validation error
+   */
+  hasValidationError(fieldId) {
+    const input = document.getElementById(fieldId);
+    return input && !input.validity.valid;
+  },
+
+  /**
    * Handle user signup
    */
   async signup() {
     const requiredFields = ['username', 'email', 'password'];
     
+    // Validate required fields
     if (!FormUtils.validateRequired(requiredFields)) {
       return;
     }
 
     const { username, email, password } = FormUtils.getValues(requiredFields);
+    
+    // Force validation of username and email
+    await checkUsernameAvailability(username);
+    await checkEmailAvailability(email);
+    
+    // Check for validation errors
+    if (this.hasValidationError('username') || this.hasValidationError('email')) {
+      Toast.error('Please fix the validation errors before submitting.');
+      return;
+    }
+    
+    // Check if passwords match
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    if (password !== confirmPassword) {
+      Toast.error('Passwords do not match');
+      return;
+    }
 
     try {
       const data = await API.post('/signup', { username, email, password });
       
-      Toast.show(data.message, data.success ? 'success' : 'error');
-      
       if (data.success) {
+        Toast.success(data.message);
         setTimeout(() => {
           Navigation.goTo('login');
         }, CONFIG.REDIRECT_DELAY);
+      } else {
+        Toast.error(data.message || 'Failed to create account. Please try again.');
       }
     } catch (error) {
+      console.error('Signup error:', error);
       Toast.error('An error occurred. Please try again.');
     }
   }
@@ -787,6 +815,174 @@ function displayUsername() {
   }
 }
 
+// Clear username status when user focuses on the username field
+function clearUsernameStatus() {
+  const statusElement = document.getElementById('username-status');
+  const usernameInput = document.getElementById('username');
+  
+  // Clear status message and any validation errors
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  usernameInput.setCustomValidity('');
+}
+
+// Clear email status when user focuses on the email field
+function clearEmailStatus() {
+  const statusElement = document.getElementById('email-status');
+  const emailInput = document.getElementById('email');
+  
+  // Clear status message and any validation errors
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  emailInput.setCustomValidity('');
+}
+
+// Clear password status when user focuses on the password field
+function clearPasswordStatus() {
+  const statusElement = document.getElementById('password-status');
+  const passwordInput = document.getElementById('password');
+  
+  // Clear status message and any validation errors
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+}
+
+// Validate password strength
+function validatePassword(password) {
+  const statusElement = document.getElementById('password-status');
+  const passwordInput = document.getElementById('password');
+  
+  // Clear previous status
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+  
+  // Check password requirements
+  const minLength = 5;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  
+  // Build error messages
+  const errors = [];
+  if (password.length < minLength) {
+    errors.push(`at least ${minLength} characters`);
+  }
+  if (!hasLowercase) {
+    errors.push('one lowercase letter');
+  }
+  if (!hasNumber) {
+    errors.push('one number');
+  }
+  
+  // If there are errors, show them
+  if (errors.length > 0) {
+    const errorMessage = `Password must contain: ${errors.join(', ')}`;
+    statusElement.textContent = `* ${errorMessage}`;
+    statusElement.className = 'status-message taken';
+    passwordInput.setCustomValidity(errorMessage);
+    return false;
+  }
+  
+  // Password is valid
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+  return true;
+}
+
+// Check email availability and format
+async function checkEmailAvailability(email) {
+  const statusElement = document.getElementById('email-status');
+  const emailInput = document.getElementById('email');
+  
+  // Clear previous status
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    statusElement.textContent = 'Please enter a valid email address';
+    statusElement.className = 'status-message taken';
+    emailInput.setCustomValidity('Please enter a valid email address');
+    return;
+  }
+  
+  try {
+    // Check if email exists
+    const response = await fetch(`${CONFIG.API_BASE_URL}/check-email?email=${encodeURIComponent(email)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Email check response:', data);
+    
+    if (data.available === true) {
+      // Clear the status message when email is available and valid
+      statusElement.textContent = '';
+      statusElement.className = 'status-message';
+    } else {
+      statusElement.textContent = '✗ Email is already registered';
+      statusElement.className = 'status-message taken';
+      emailInput.setCustomValidity('Email is already registered');
+    }
+  } catch (error) {
+    console.error('Error checking email:', error);
+    statusElement.textContent = 'Error checking email availability';
+    statusElement.className = 'status-message';
+  }
+}
+
+// Check username availability
+async function checkUsernameAvailability(username) {
+  const statusElement = document.getElementById('username-status');
+  const usernameInput = document.getElementById('username');
+  
+  // Clear previous status
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  
+  // Don't check if username is empty or too short
+  if (!username || username.length < 3) {
+    if (username && username.length > 0) {
+      statusElement.textContent = 'Username must be at least 3 characters';
+      statusElement.className = 'status-message taken';
+      usernameInput.setCustomValidity('Username must be at least 3 characters');
+    } else {
+      usernameInput.setCustomValidity('');
+    }
+    return;
+  }
+  
+  try {
+    // Check if username exists
+    const response = await fetch(`${CONFIG.API_BASE_URL}/check-username?username=${encodeURIComponent(username)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Username check response:', data); // Debug log
+    
+    if (data.available === true) {
+      // Clear the status message when username is available
+      statusElement.textContent = '';
+      statusElement.className = 'status-message';
+    } else {
+      statusElement.textContent = '✗ Username is already taken';
+      statusElement.className = 'status-message taken';
+    }
+  } catch (error) {
+    console.error('Error checking username:', error);
+    statusElement.textContent = 'Error checking username availability';
+    statusElement.className = 'status-message';
+  }
+}
+
 // Auto-display username when page loads
 document.addEventListener('DOMContentLoaded', function() {
   // Check if we're on the user interface page
@@ -878,9 +1074,14 @@ async function loadUserNotifications(username) {
       return;
     }
 
-    // Separate pending and approved for better organization
-    const pending = relevant.filter(d => d.status === 'PENDING');
-    const approved = relevant.filter(d => d.status === 'APPROVED');
+    // Separate pending and approved for better organization and sort by date (newest first)
+    const pending = relevant
+      .filter(d => d.status === 'PENDING')
+      .sort((a, b) => new Date(b.donationDate) - new Date(a.donationDate));
+      
+    const approved = relevant
+      .filter(d => d.status === 'APPROVED')
+      .sort((a, b) => new Date(b.approvalDate || b.donationDate) - new Date(a.approvalDate || a.donationDate));
 
     let html = '';
     if (pending.length > 0) {

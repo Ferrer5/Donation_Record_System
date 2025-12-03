@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Notifications - Donation Record System</title>
+  <style>
+    /* Force black text for announcement meta in notifications */
+    .notif-box > p.announcement-meta,
+    .notif-box > div > p.announcement-meta {
+      color: #000000 !important;
+    }
+  </style>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="body1">
@@ -110,34 +117,77 @@
       if (loadingMessage) loadingMessage.remove();
 
       try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/donations/all`);
-        const data = await response.json();
-        if (!data.success) {
-          container.innerHTML = '<div class="notif-box"><p>Error loading notifications.</p></div>';
+        // Fetch both donations and announcements in parallel
+        const [donationsResponse, announcementsResponse] = await Promise.all([
+          fetch(`${CONFIG.API_BASE_URL}/donations/all`).then(res => res.json()),
+          API.getAnnouncements().catch(() => ({ announcements: [] }))
+        ]);
+
+        // Process donations with proper timestamp handling
+        const donations = (donationsResponse.success ? donationsResponse.donations || [] : []);
+        const relevantDonations = donations
+          .filter(d => d.status === 'PENDING' || d.status === 'APPROVED')
+          .map(d => {
+            // Ensure we have a valid date for sorting
+            let sortDate = d.updatedAt || d.createdAt || d.donationDate;
+            if (d.status === 'APPROVED' && d.approvalDate) {
+              sortDate = d.approvalDate;
+            }
+            return {
+              ...d,
+              type: 'donation',
+              sortDate: sortDate
+            };
+          });
+
+        // Process announcements with proper timestamp handling
+        const announcements = (announcementsResponse?.announcements || [])
+          .map(a => ({
+            ...a,
+            type: 'announcement',
+            sortDate: a.datePosted || a.timestamp || a.date_posted || a.createdAt || new Date().toISOString()
+          }));
+
+        // Combine and sort by date (newest first) with proper date handling
+        const allItems = [...relevantDonations, ...announcements]
+          .filter(item => item.sortDate) // Filter out items without a sort date
+          .sort((a, b) => {
+            // Convert to timestamps for reliable comparison
+            const dateA = new Date(a.sortDate).getTime();
+            const dateB = new Date(b.sortDate).getTime();
+            return dateB - dateA; // Sort newest first
+          });
+
+        if (allItems.length === 0) {
+          container.innerHTML = '<div class="notif-box"><p>No notifications yet.</p></div>';
           return;
         }
 
-        const donations = data.donations || [];
-        const recentDonations = donations.slice(0, 20);
-
-        if (recentDonations.length === 0) {
-          container.innerHTML = '<div class="notif-box"><p>No donations yet.</p></div>';
-          renderAnnouncementNotifications(container, '📢 Posted Announcements');
-          return;
-        }
-
-        const approved = recentDonations.filter(d => d.status === 'APPROVED');
-
+        // Render all items
         let html = '';
-        if (approved.length > 0) {
-          html += '<h3 style="color: #fff; margin: 20px 0 10px 0; font-size: 1.1rem;">✅ Approved Donations</h3>';
-          html += approved.map(donation => formatAdminNotification(donation, false)).join('');
-        } else {
-          html = '<div class="notif-box"><p>No approved donations yet.</p></div>';
-        }
+        allItems.forEach(item => {
+          if (item.type === 'donation') {
+            const isPending = item.status === 'PENDING';
+            html += formatAdminNotification(item, isPending);
+          } else {
+            // Format announcement
+            html += `
+              <div class="notif-box" style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <strong>📢 ${item.title || 'Announcement'}</strong>
+                  <span style="background: #4a90e2; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem;">ANNOUNCEMENT</span>
+                </div>
+                <p>${item.message || ''}</p>
+                <p style="font-size: 0.85rem; margin-top: 8px; color: #000000 !important; font-weight: 500;">
+                  ${item.audience ? `Audience: ${item.audience} • ` : ''}${item.priority ? `Priority: ${item.priority}` : ''}
+                </p>
+                <span class="notif-time">${item.sortDate ? new Date(item.sortDate).toLocaleString() : ''}</span>
+              </div>
+            `;
+          }
+        });
 
         container.innerHTML = html;
-        renderAnnouncementNotifications(container, '📢 Posted Announcements');
       } catch (error) {
         console.error('Error loading admin notifications:', error);
         container.innerHTML = '<div class="notif-box"><p>Error loading notifications. Please try again.</p></div>';
@@ -153,12 +203,17 @@
         ? '<span style="background: #ff7b00; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">PENDING</span>'
         : '<span style="background: #4caf50; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">APPROVED</span>';
 
-      const approveButton = isPending 
-        ? `<button class="red-btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.9rem;" onclick="approveDonationFromNotif(${donation.id})">Approve Donation</button>`
+      const actionButtons = isPending 
+        ? `
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="red-btn" style="padding: 8px 15px; font-size: 0.9rem;" onclick="approveDonationFromNotif(${donation.id})">Approve</button>
+            <button class="delete-btn" style="padding: 8px 15px; font-size: 0.9rem; background: #f44336;" onclick="deleteDonation(${donation.id})">Delete</button>
+          </div>
+        `
         : '';
 
       return `
-        <div class="notif-box" style="margin-bottom: 15px;">
+        <div class="notif-box" style="margin-bottom: 15px;" data-donation-id="${donation.id}">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <strong>${donation.fullName}</strong>
             ${statusBadge}
@@ -167,14 +222,54 @@
           ${donation.email ? `<p><strong>Email:</strong> ${donation.email}</p>` : ''}
           ${donation.message && donation.donationType !== 'Goods' ? `<p><em>${donation.message}</em></p>` : ''}
           <p><small>Submitted: ${Donation.formatDate(donation.createdAt)}</small></p>
-          ${approveButton}
+          ${actionButtons}
         </div>
       `;
     }
 
     async function approveDonationFromNotif(donationId) {
-      const success = await Donation.approve(donationId);
-      if (success) await loadAdminNotifications();
+      try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/donations/${donationId}/approve`, {
+          method: 'PUT'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          await loadAdminNotifications();
+        } else {
+          console.error('Failed to approve donation:', data.message);
+          alert('Failed to approve donation. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error approving donation:', error);
+        alert('An error occurred while approving the donation.');
+      }
+    }
+
+    async function deleteDonation(donationId) {
+      if (!confirm('Are you sure you want to delete this donation? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/donations/${donationId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Donation deleted successfully');
+          await loadAdminNotifications();
+        } else {
+          throw new Error(data.message || 'Failed to delete donation');
+        }
+      } catch (error) {
+        console.error('Error deleting donation:', error);
+        alert('Failed to delete donation. Please try again.');
+      }
     }
 
     function renderAnnouncementNotifications(container, headingText) {
@@ -186,7 +281,7 @@
               <div class="notif-box">
                 <p><strong>📢 ${a.title}</strong></p>
                 <p>${a.message}</p>
-                <p style="font-size: 0.85rem; margin-top: 8px;">Audience: ${a.audience || 'All Donors'} • Priority: ${a.priority || 'Normal'}</p>
+                <p class="announcement-meta" style="font-size: 0.85rem; margin-top: 8px; color: #000000 !important;">Audience: ${a.audience || 'All Donors'} • Priority: ${a.priority || 'Normal'}</p>
                 <span class="notif-time">${new Date(a.datePosted || a.timestamp || a.date_posted).toLocaleString()}</span>
               </div>
             `).join('');

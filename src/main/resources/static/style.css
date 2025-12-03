@@ -14,6 +14,35 @@ body {
 html {
   overflow-x: hidden;
 }
+
+/* Status message styles */
+.status-message {
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  margin-bottom: 0.5rem;
+  min-height: 1rem;
+  line-height: 1.2;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.status-message.taken,
+.status-message.error {
+  color: #ff0000;
+}
+
+.status-message.success {
+  color: #51cf66;
+  background-color: rgba(40, 167, 69, 0.1);
+  border-left: 3px solid #51cf66;
+}
+
+.status-message.warning {
+  color: #ffd43b;
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid #ffd43b;
+}
 .red-btn {
   background: linear-gradient(90deg, #ff3b3b, #ff7b00);
   border: none;
@@ -789,6 +818,10 @@ footer p span {
   color: #555;
   margin-top: 5px;
 }
+
+.notif-box .announcement-meta {
+  color: #000000 !important;
+}
 .x-btn {
   background: none;
   border: none;
@@ -1193,7 +1226,7 @@ footer p span {
 .announcement-item .meta {
   margin: 4px 0 0;
   font-size: 0.85rem;
-  color: #ffe1c4;
+  color: #000000;
 }
 
 .announcement-item p {

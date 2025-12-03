@@ -15,14 +15,29 @@
     <p class="auth-subtitle">Join our donation community today</p>
 
     <form>
-      <label>Username:</label>
-      <input type="text" id="username" placeholder="Enter username" required>
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="Enter username" required 
+               onblur="checkUsernameAvailability(this.value)" 
+               onfocus="clearUsernameStatus()">
+        <div id="username-status" class="status-message"></div>
+      </div>
 
-      <label>Email:</label>
-      <input type="email" id="email" placeholder="Enter email" required>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Enter email" required 
+               onblur="checkEmailAvailability(this.value)" 
+               onfocus="clearEmailStatus()">
+        <div id="email-status" class="status-message"></div>
+      </div>
 
-      <label>Password:</label>
-      <input type="password" id="password" placeholder="Enter password" required>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Enter password" required 
+               oninput="validatePassword(this.value)" 
+               onfocus="clearPasswordStatus()">
+        <div id="password-status" class="status-message"></div>
+      </div>
 
       <label>Confirm Password:</label>
       <input type="password" id="confirmPassword" placeholder="Re-enter password" required>

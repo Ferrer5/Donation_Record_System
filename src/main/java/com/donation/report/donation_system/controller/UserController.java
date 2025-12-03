@@ -25,6 +25,31 @@ public class UserController {
     @Autowired
     private PasswordResetService passwordResetService;
 
+    // CHECK USERNAME AVAILABILITY
+    @GetMapping("/check-username")
+    public Map<String, Object> checkUsernameAvailability(@RequestParam String username) {
+        System.out.println("Checking username: " + username); // Debug log
+        Map<String, Object> response = new HashMap<>();
+        User user = userRepository.findByUsername(username);
+        System.out.println("User found: " + (user != null ? user.getUsername() : "null")); // Debug log
+        boolean exists = user != null;
+        response.put("available", !exists);
+        System.out.println("Response: " + response); // Debug log
+        return response;
+    }
+    
+    @GetMapping("/check-email")
+    public Map<String, Object> checkEmailAvailability(@RequestParam String email) {
+        System.out.println("Checking email: " + email); // Debug log
+        Map<String, Object> response = new HashMap<>();
+        User user = userRepository.findByEmail(email);
+        System.out.println("User found with email: " + (user != null ? user.getEmail() : "null"));
+        boolean exists = user != null;
+        response.put("available", !exists);
+        System.out.println("Response: " + response);
+        return response;
+    }
+
     // LIST USERS
     @GetMapping("/users")
     public List<User> getAllUsers() {
@@ -114,7 +139,7 @@ public class UserController {
             }
 
             // Generate and store verification code
-            String verificationCode = passwordResetService.generateAndStoreCode(username, email);
+            String verificationCode = passwordResetService.generateAndStoreCode(email);
             
             // Send email with verification code
             emailService.sendVerificationCode(email, username, verificationCode);
