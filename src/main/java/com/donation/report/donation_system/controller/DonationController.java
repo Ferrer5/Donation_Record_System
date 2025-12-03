@@ -17,7 +17,6 @@ public class DonationController {
     @Autowired
     private DonationRepository donationRepository;
 
-    // SUBMIT DONATION
     @PostMapping("/submit")
     public Map<String, Object> submitDonation(@RequestBody Map<String, Object> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -45,7 +44,6 @@ public class DonationController {
         return response;
     }
 
-    // GET USER DONATIONS (for history)
     @GetMapping("/user/{username}")
     public Map<String, Object> getUserDonations(@PathVariable String username) {
         Map<String, Object> response = new HashMap<>();
@@ -62,7 +60,6 @@ public class DonationController {
         return response;
     }
 
-    // GET PENDING DONATIONS (for admin)
     @GetMapping("/pending")
     public Map<String, Object> getPendingDonations() {
         Map<String, Object> response = new HashMap<>();
@@ -79,7 +76,6 @@ public class DonationController {
         return response;
     }
 
-    // GET ALL DONATIONS (for admin)
     @GetMapping("/all")
     public Map<String, Object> getAllDonations() {
         Map<String, Object> response = new HashMap<>();
@@ -96,7 +92,6 @@ public class DonationController {
         return response;
     }
 
-    // APPROVE DONATION
     @PutMapping("/{id}/approve")
     public Map<String, Object> approveDonation(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -124,17 +119,15 @@ public class DonationController {
         return response;
     }
 
-    // GET USER NOTIFICATIONS (approved donations)
     @GetMapping("/user/{username}/notifications")
     public Map<String, Object> getUserNotifications(@PathVariable String username) {
         Map<String, Object> response = new HashMap<>();
         
         try {
             List<Donation> donations = donationRepository.findByUsernameOrderByCreatedAtDesc(username);
-            // Filter for approved donations (recent notifications)
             List<Donation> notifications = donations.stream()
                 .filter(d -> "APPROVED".equals(d.getStatus()))
-                .limit(10) // Get last 10 approved donations
+                .limit(10)
                 .toList();
             
             response.put("success", true);
@@ -147,7 +140,6 @@ public class DonationController {
         return response;
     }
 
-    // DELETE DONATION
     @DeleteMapping("/{id}")
     public Map<String, Object> deleteDonation(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -177,7 +169,6 @@ public class DonationController {
         return response;
     }
 
-    // ADMIN ADD RECORD (admin can add donation records directly, auto-approved)
     @PostMapping("/admin/add")
     public Map<String, Object> adminAddRecord(@RequestBody Map<String, Object> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -185,14 +176,9 @@ public class DonationController {
         try {
             Donation donation = new Donation();
             
-            // For admin-added records, use admin username or a system default
-            // Note: The username must exist in users table due to foreign key constraint
-            // If adding records for non-users, create a system user account first
             String donorName = (String) payload.get("donorName");
             String username = (String) payload.get("username");
             if (username == null || username.trim().isEmpty()) {
-                // Default to a system username - admin should ensure this user exists
-                // Or create a system user account in the database
                 username = "admin_system";
             }
             
@@ -209,7 +195,6 @@ public class DonationController {
             }
             donation.setDonationType(donationType != null ? donationType : "Others");
             
-            // Handle amount - for goods, store 0 and put description in message
             Object amountObj = payload.get("amount");
             Double amount = 0.0;
             String message = (String) payload.get("message");
@@ -222,7 +207,6 @@ public class DonationController {
                 }
             }
             
-            // If it's goods and no amount, put description in message
             if (("Goods".equalsIgnoreCase(donationType) || "Others".equalsIgnoreCase(donationType)) && amount == 0) {
                 String itemsDescription = (String) payload.get("itemsDescription");
                 if (itemsDescription != null && !itemsDescription.trim().isEmpty()) {
@@ -232,7 +216,7 @@ public class DonationController {
             
             donation.setAmount(amount);
             donation.setMessage(message);
-            donation.setStatus("APPROVED"); // Admin-added records are auto-approved
+            donation.setStatus("APPROVED");
             
             donationRepository.save(donation);
             

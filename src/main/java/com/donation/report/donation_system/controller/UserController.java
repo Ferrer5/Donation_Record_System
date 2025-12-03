@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // allow your JS frontend to connect
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -25,38 +25,30 @@ public class UserController {
     @Autowired
     private PasswordResetService passwordResetService;
 
-    // CHECK USERNAME AVAILABILITY
     @GetMapping("/check-username")
     public Map<String, Object> checkUsernameAvailability(@RequestParam String username) {
-        System.out.println("Checking username: " + username); // Debug log
         Map<String, Object> response = new HashMap<>();
         User user = userRepository.findByUsername(username);
-        System.out.println("User found: " + (user != null ? user.getUsername() : "null")); // Debug log
         boolean exists = user != null;
         response.put("available", !exists);
-        System.out.println("Response: " + response); // Debug log
         return response;
     }
     
     @GetMapping("/check-email")
     public Map<String, Object> checkEmailAvailability(@RequestParam String email) {
-        System.out.println("Checking email: " + email); // Debug log
         Map<String, Object> response = new HashMap<>();
         User user = userRepository.findByEmail(email);
-        System.out.println("User found with email: " + (user != null ? user.getEmail() : "null"));
         boolean exists = user != null;
         response.put("available", !exists);
         System.out.println("Response: " + response);
         return response;
     }
 
-    // LIST USERS
     @GetMapping("/users")
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // LOGIN
     @PostMapping("/login")
     public Map<String,Object> loginUser(@RequestBody Map<String,String> payload) {
         Map<String,Object> response = new HashMap<>();
@@ -74,7 +66,6 @@ public class UserController {
         return response;
     }
 
-    // SIGNUP
     @PostMapping("/signup")
     public Map<String,Object> signupUser(@RequestBody Map<String,String> payload) {
         Map<String,Object> response = new HashMap<>();
@@ -104,7 +95,6 @@ public class UserController {
         return response;
     }
 
-    // FORGOT PASSWORD - REQUEST CODE
     @PostMapping("/forgot-password")
     public Map<String, Object> requestPasswordReset(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -138,10 +128,8 @@ public class UserController {
                 return response;
             }
 
-            // Generate and store verification code
             String verificationCode = passwordResetService.generateAndStoreCode(email);
             
-            // Send email with verification code
             emailService.sendVerificationCode(email, username, verificationCode);
             
             response.put("success", true);
@@ -154,7 +142,6 @@ public class UserController {
         return response;
     }
 
-    // VERIFY CODE
     @PostMapping("/verify-code")
     public Map<String, Object> verifyCode(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -191,7 +178,6 @@ public class UserController {
         return response;
     }
 
-    // RESET PASSWORD
     @PostMapping("/reset-password")
     public Map<String, Object> resetPassword(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -225,7 +211,6 @@ public class UserController {
         }
 
         try {
-            // Verify code first
             boolean isValid = passwordResetService.verifyCode(username, code);
             
             if (!isValid) {
@@ -234,7 +219,6 @@ public class UserController {
                 return response;
             }
 
-            // Update password
             User user = userRepository.findByUsername(username);
             if (user == null) {
                 response.put("success", false);
@@ -245,7 +229,6 @@ public class UserController {
             user.setPassword(newPassword);
             userRepository.save(user);
             
-            // Remove verification code after successful reset
             passwordResetService.removeCode(username);
             
             response.put("success", true);
@@ -258,7 +241,6 @@ public class UserController {
         return response;
     }
 
-    // DELETE ACCOUNT
     @DeleteMapping("/delete-account")
     public Map<String, Object> deleteAccount(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
@@ -279,7 +261,6 @@ public class UserController {
                 return response;
             }
 
-            // Delete user (this will cascade delete donations due to foreign key constraint)
             userRepository.delete(user);
             
             response.put("success", true);

@@ -16,7 +16,6 @@ public class AdminController {
     @Autowired
     private AdminRepository adminRepository;
 
-    // ADMIN LOGIN
     @PostMapping("/login")
     public Map<String, Object> loginAdmin(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
