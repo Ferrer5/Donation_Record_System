@@ -1,29 +1,29 @@
 # Stage 1: Build the application
-FROM eclipse-temurin:21-jammy as builder
+FROM eclipse-temurin:21-jammy AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install Maven and other build dependencies
+# Install only Maven (smaller image size)
 RUN apt-get update && \
-    apt-get install -y maven && \
+    apt-get install -y --no-install-recommends maven && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy Maven wrapper and pom.xml first (better layer caching)
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copy only the files needed for downloading dependencies
+COPY pom.xml mvnw* ./
+COPY .mvn/ .mvn
 
-# Make Maven wrapper executable and download dependencies
-# Using both system Maven and wrapper for better reliability
+# Download dependencies first (cached unless pom.xml changes)
 RUN chmod +x mvnw && \
-    { ./mvnw dependency:go-offline -B || mvn dependency:go-offline -B; }
+    { ./mvnw dependency:go-offline -B -DskipTests || \
+      mvn dependency:go-offline -B -DskipTests; }
 
 # Copy source code
-COPY src/ ./src/
+COPY src/ src/
 
-# Build the application using system Maven
-RUN { ./mvnw clean package -DskipTests || mvn clean package -DskipTests; }
+# Build the application (cached unless source changes)
+RUN { ./mvnw clean package -DskipTests || \
+      mvn clean package -DskipTests; }
 
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:21-jre-jammy
@@ -31,15 +31,24 @@ FROM eclipse-temurin:21-jre-jammy
 # Set working directory
 WORKDIR /app
 
-# Copy the built JAR file
-COPY --from=builder /app/target/donation-report-system-*.jar app.jar
-
-# Create config directory and copy production properties
+# Create config directory and copy production properties first (better layer caching)
 RUN mkdir -p /app/config
+COPY --from=builder /app/target/donation-report-system-*.jar app.jar
 COPY src/main/resources/application-production.properties /app/config/
+
+# Set JVM options for production
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+OptimizeStringConcat -XX:+UseStringDeduplication"
 
 # Expose the port the app runs on
 EXPOSE ${PORT:-8080}
 
-# Run the application
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Dspring.profiles.active=production -jar app.jar"]
+# Use a non-root user
+RUN useradd -m myapp && chown -R myapp:myapp /app
+USER myapp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8080}/actuator/health || exit 1
+
+# Run the application with optimized JVM settings
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Dspring.profiles.active=production -jar app.jar"]
