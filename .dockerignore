@@ -6,11 +6,21 @@ target/
 .git/
 .idea/
 *.iml
-mvnw.cmd
-.mvn/
+*.ipr
+*.iws
 
-# Temp files
-*.tmp
-*.bak
-*.swp
-*~
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local configuration files
+application-*.properties
+!application-production.properties
+
+# Include Maven Wrapper files
+!.mvn/
+!mvnw
+!mvnw.cmd

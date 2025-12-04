@@ -4,9 +4,9 @@ FROM eclipse-temurin:21-jammy as builder
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper files
+# Copy Maven wrapper and pom.xml first (better layer caching)
 COPY mvnw .
-COPY .mvn/ .mvn/
+COPY .mvn .mvn
 COPY pom.xml .
 
 # Make Maven wrapper executable and download dependencies
