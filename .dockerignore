@@ -19,6 +19,11 @@ Thumbs.db
 application-*.properties
 !application-production.properties
 
+# Include Maven Wrapper files
+!.mvn/
+!mvnw
+!mvnw.cmd
+
 # Git
 .git/
 .gitignore
