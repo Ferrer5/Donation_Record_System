@@ -4,20 +4,26 @@ FROM eclipse-temurin:21-jammy as builder
 # Set working directory
 WORKDIR /app
 
+# Install Maven and other build dependencies
+RUN apt-get update && \
+    apt-get install -y maven && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy Maven wrapper and pom.xml first (better layer caching)
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
 # Make Maven wrapper executable and download dependencies
+# Using both system Maven and wrapper for better reliability
 RUN chmod +x mvnw && \
-    ./mvnw dependency:go-offline -B
+    { ./mvnw dependency:go-offline -B || mvn dependency:go-offline -B; }
 
 # Copy source code
 COPY src/ ./src/
 
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Build the application using system Maven
+RUN { ./mvnw clean package -DskipTests || mvn clean package -DskipTests; }
 
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:21-jre-jammy
