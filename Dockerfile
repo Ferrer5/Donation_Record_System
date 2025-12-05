@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jammy AS builder
 # Set working directory
 WORKDIR /app
 
-# Install only Maven (smaller image size)
+# Install Maven
 RUN apt-get update && \
     apt-get install -y --no-install-recommends maven && \
     rm -rf /var/lib/apt/lists/*
@@ -23,7 +23,13 @@ COPY src/ src/
 
 # Build the application (cached unless source changes)
 RUN { ./mvnw clean package -DskipTests || \
-      mvn clean package -DskipTests; }
+      mvn clean package -DskipTests; } && \
+    # Verify the JAR file exists and is not empty
+    if [ ! -f "/app/target/Donation_Record_System-1.0.0.jar" ]; then \
+        echo "Error: JAR file not found!"; \
+        ls -la /app/target/; \
+        exit 1; \
+    fi
 
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:21-jre-jammy
@@ -31,9 +37,13 @@ FROM eclipse-temurin:21-jre-jammy
 # Set working directory
 WORKDIR /app
 
-# Create config directory and copy production properties first (better layer caching)
+# Create config directory
 RUN mkdir -p /app/config
-COPY --from=builder /app/target/Donation_Record_System-*.jar app.jar
+
+# Copy the JAR file from the builder stage
+COPY --from=builder /app/target/Donation_Record_System-1.0.0.jar app.jar
+
+# Copy production properties
 COPY src/main/resources/application-production.properties /app/config/
 
 # Set JVM options for production
@@ -48,7 +58,7 @@ USER myapp
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-8080}/actuator/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/actuator/health || exit 1
 
-# Run the application with optimized JVM settings
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Dspring.profiles.active=production -jar app.jar"]
+# Command to run the application
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app/app.jar --spring.config.location=file:/app/config/application-production.properties"]
