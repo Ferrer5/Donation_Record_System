@@ -33,7 +33,7 @@ WORKDIR /app
 
 # Create config directory and copy production properties first (better layer caching)
 RUN mkdir -p /app/config
-COPY --from=builder /app/target/donation-report-system-*.jar app.jar
+COPY --from=builder /app/target/Donation_Record_System-*.jar app.jar
 COPY src/main/resources/application-production.properties /app/config/
 
 # Set JVM options for production
