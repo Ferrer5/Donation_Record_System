@@ -14,10 +14,10 @@
     </parent>
     
     <groupId>com.janrey</groupId>
-    <artifactId>donation-report-system</artifactId>
+    <artifactId>Donation_Record_System</artifactId>
     <version>1.0.0</version>
-    <name>Donation Report System</name>
-    <description>Community Donation Report System built with Spring Boot</description>
+    <name>Donation Record System</name>
+    <description>Community Donation Record System built with Spring Boot</description>
 
     <properties>
         <java.version>21</java.version>
@@ -94,9 +94,10 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.janrey.DonationReportSystemApplication</mainClass>
+                                    <mainClass>com.donation.report.donation_system.DonationSystemApplication</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
