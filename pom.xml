@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.2.5</version>
         <relativePath/>
     </parent>
     
@@ -21,6 +21,10 @@
 
     <properties>
         <java.version>21</java.version>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <jsr305.version>3.0.2</jsr305.version>
     </properties>
 
     <dependencies>
@@ -61,10 +65,16 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Boot Actuator for health checks and monitoring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -81,6 +91,26 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-Xlint:-processing</arg>
+                        <arg>-parameters</arg>
+                        <arg>-Xmaxerrs</arg>
+                        <arg>1000</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.code.findbugs</groupId>
+                            <artifactId>jsr305</artifactId>
+                            <version>${jsr305.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>

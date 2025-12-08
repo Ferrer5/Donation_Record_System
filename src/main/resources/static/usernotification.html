@@ -82,7 +82,6 @@
             };
           });
 
-        // Process announcements with proper timestamp handling
         const announcements = (announcementsResponse?.announcements || [])
           .map(a => ({
             ...a,
@@ -90,14 +89,12 @@
             sortDate: a.datePosted || a.timestamp || a.date_posted || a.createdAt || new Date().toISOString()
           }));
 
-        // Combine and sort by date (newest first) with proper date handling
         const allItems = [...relevantDonations, ...announcements]
-          .filter(item => item.sortDate) // Filter out items without a sort date
+          .filter(item => item.sortDate)
           .sort((a, b) => {
-            // Convert to timestamps for reliable comparison
             const dateA = new Date(a.sortDate).getTime();
             const dateB = new Date(b.sortDate).getTime();
-            return dateB - dateA; // Sort newest first
+            return dateB - dateA;
           });
 
         if (allItems.length === 0) {
@@ -105,14 +102,13 @@
           return;
         }
 
-        // Render all items
         let html = '';
         allItems.forEach(item => {
           if (item.type === 'donation') {
             const isPending = item.status === 'PENDING';
             html += formatUserNotification(item, isPending);
           } else {
-            // Format announcement
+
             html += `
               <div class="notif-box" style="margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">

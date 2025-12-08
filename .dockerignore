@@ -1,26 +1,20 @@
-# Only exclude target directory but keep the final JAR
 target/
 !target/*.jar
 
-# Ignore Git and IDE files
 .git/
 .idea/
 *.iml
 *.ipr
 *.iws
 
-# System files
 .DS_Store
 Thumbs.db
 
-# Logs
 *.log
 
-# Local configuration files
 application-*.properties
 !application-production.properties
 
-# Include Maven Wrapper files
 !.mvn/
 !mvnw
 !mvnw.cmd

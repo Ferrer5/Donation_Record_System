@@ -1,15 +1,12 @@
-# Maven
 target/
 !target/*.jar
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-# Environment variables
 .env
 *.env
 
-# IDE
 .idea/
 *.iml
 *.ipr
@@ -20,35 +17,27 @@ target/
 .classpath
 .factorypath
 
-# Build
 target/
 build/
 bin/
 
-# Logs
 *.log
 
-# Local development
 *.db
 *.sql
 *.h2.db
 
-# System Files
 .DS_Store
 Thumbs.db
 
-# Application Properties
 application-*.properties
 !application-production.properties
 
-# Docker
 Dockerfile
 .dockerignore
 
-# Railway
 railway.json
 
-# Temp files
 *.tmp
 *.bak
 *.swp

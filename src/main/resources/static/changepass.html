@@ -13,11 +13,20 @@
     <p class="auth-subtitle">Create a new password for your account.</p>
 
     <form>
-      <label>New Password:</label>
-      <input type="password" id="new-password" placeholder="Enter new password" required>
+      <div class="form-group">
+        <label>New Password:</label>
+        <input type="password" id="new-password" placeholder="Enter new password" required
+               oninput="validateNewPassword(this.value)"
+               onfocus="clearNewPasswordStatus()">
+        <div id="new-password-status" class="status-message"></div>
+      </div>
 
-      <label>Confirm Password:</label>
-      <input type="password" id="confirm-password" placeholder="Re-enter new password" required>
+      <div class="form-group">
+        <label>Confirm Password:</label>
+        <input type="password" id="confirm-password" placeholder="Re-enter new password" required
+               oninput="validatePasswordMatch()">
+        <div id="confirm-password-status" class="status-message"></div>
+      </div>
 
       <button type="button" class="red-btn" id="reset-password-btn" onclick="resetPassword()">Reset Password</button>
     </form>

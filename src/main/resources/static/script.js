@@ -278,11 +278,7 @@ const FormUtils = {
   }
 };
 
-// ==================== Authentication Functions ====================
 const Auth = {
-  /**
-   * Handle login
-   */
   async login() {
     const requiredFields = ['username', 'password'];
     
@@ -298,7 +294,6 @@ const Auth = {
       Toast.show(data.message, data.success ? 'success' : 'error');
       
       if (data.success) {
-        // Store username in localStorage for donation tracking
         localStorage.setItem('currentUser', username);
         setTimeout(() => {
           Navigation.goTo('userInt');
@@ -309,21 +304,14 @@ const Auth = {
     }
   },
 
-  /**
-   * Check if a field has a validation error
-   */
   hasValidationError(fieldId) {
     const input = document.getElementById(fieldId);
     return input && !input.validity.valid;
   },
 
-  /**
-   * Handle user signup
-   */
   async signup() {
     const requiredFields = ['username', 'email', 'password'];
     
-    // Validate required fields
     if (!FormUtils.validateRequired(requiredFields)) {
       return;
     }
@@ -681,22 +669,21 @@ const PasswordReset = {
    * Request password reset code
    */
   async requestCode() {
-    const username = FormUtils.getValue('forgot-username');
     const email = FormUtils.getValue('forgot-email');
 
-    if (!username || !email) {
-      Toast.error('Please fill in all fields');
+    if (!email) {
+      Toast.error('Please enter your email address');
       return;
     }
 
     try {
-      const data = await API.post('/forgot-password', { username, email });
+      const data = await API.post('/forgot-password', { email });
       
       Toast.show(data.message, data.success ? 'success' : 'error');
       
       if (data.success) {
-        // Store username for verification step
-        localStorage.setItem('resetUsername', username);
+        // Store email for verification step
+        localStorage.setItem('resetEmail', email);
         setTimeout(() => {
           Navigation.goTo('forgot1');
         }, CONFIG.REDIRECT_DELAY);
@@ -710,10 +697,10 @@ const PasswordReset = {
    * Verify code and proceed to password reset
    */
   async verifyCode() {
-    const username = localStorage.getItem('resetUsername');
+    const email = localStorage.getItem('resetEmail');
     const code = FormUtils.getValue('verification-code');
 
-    if (!username) {
+    if (!email) {
       Toast.error('Session expired. Please start over.');
       Navigation.goTo('forgot');
       return;
@@ -725,16 +712,19 @@ const PasswordReset = {
     }
 
     try {
-      const data = await API.post('/verify-code', { username, code });
-      
-      Toast.show(data.message, data.success ? 'success' : 'error');
+      const data = await API.post('/verify-code', { email, code });
       
       if (data.success) {
+        // Show success message
+        Toast.show('Verification Successful!', 'success');
         // Store code for password reset
         localStorage.setItem('resetCode', code);
         setTimeout(() => {
           Navigation.goTo('changepass');
         }, CONFIG.REDIRECT_DELAY);
+      } else {
+        // Show error message from server
+        Toast.error(data.message || 'Invalid verification code');
       }
     } catch (error) {
       Toast.error('An error occurred. Please try again.');
@@ -745,12 +735,12 @@ const PasswordReset = {
    * Reset password
    */
   async resetPassword() {
-    const username = localStorage.getItem('resetUsername');
+    const email = localStorage.getItem('resetEmail');
     const code = localStorage.getItem('resetCode');
     const newPassword = FormUtils.getValue('new-password');
     const confirmPassword = FormUtils.getValue('confirm-password');
 
-    if (!username || !code) {
+    if (!email || !code) {
       Toast.error('Session expired. Please start over.');
       Navigation.goTo('forgot');
       return;
@@ -766,23 +756,37 @@ const PasswordReset = {
       return;
     }
 
+    // Check if the new password is the same as the current one
     try {
+      const response = await API.post('/check-password', {
+        email,
+        password: newPassword
+      });
+
+      if (response.isSamePassword) {
+        const useSamePassword = confirm('Do you want to use this password again? This is the same as your current password.');
+        if (!useSamePassword) {
+          return; // User chose not to use the same password
+        }
+      }
+
       const data = await API.post('/reset-password', { 
-        username, 
+        email,
         code, 
         newPassword, 
         confirmPassword 
       });
       
-      Toast.show(data.message, data.success ? 'success' : 'error');
-      
       if (data.success) {
+        Toast.show('Password reset successfully!', 'success');
         // Clear reset data
-        localStorage.removeItem('resetUsername');
+        localStorage.removeItem('resetEmail');
         localStorage.removeItem('resetCode');
         setTimeout(() => {
           Navigation.goTo('succChanged');
         }, CONFIG.REDIRECT_DELAY);
+      } else {
+        Toast.error(data.message || 'Failed to reset password');
       }
     } catch (error) {
       Toast.error('An error occurred. Please try again.');
@@ -810,7 +814,7 @@ function displayUsername() {
       usernameDisplay.textContent = username;
     } else {
       // If no username found, redirect to login
-      Navigation.goTo('login');
+      Navigation.goTo('succChangePass');
     }
   }
 }
@@ -884,11 +888,90 @@ function validatePassword(password) {
     return false;
   }
   
-  // Password is valid
   statusElement.textContent = '';
   statusElement.className = 'status-message';
   passwordInput.setCustomValidity('');
   return true;
+}
+
+function clearNewPasswordStatus() {
+  const statusElement = document.getElementById('new-password-status');
+  const passwordInput = document.getElementById('new-password');
+  
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+}
+
+function validateNewPassword(password) {
+  const statusElement = document.getElementById('new-password-status');
+  const passwordInput = document.getElementById('new-password');
+  
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+  
+  const minLength = 5;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  
+  const errors = [];
+  if (password.length < minLength) {
+    errors.push(`at least ${minLength} characters`);
+  }
+  if (!hasLowercase) {
+    errors.push('one lowercase letter');
+  }
+  if (!hasNumber) {
+    errors.push('one number');
+  }
+  
+  if (errors.length > 0) {
+    const errorMessage = `Password must contain: ${errors.join(', ')}`;
+    statusElement.textContent = `* ${errorMessage}`;
+    statusElement.className = 'status-message taken';
+    passwordInput.setCustomValidity(errorMessage);
+    return false;
+  }
+  
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  passwordInput.setCustomValidity('');
+  
+  const confirmPassword = document.getElementById('confirm-password').value;
+  if (confirmPassword) {
+    validatePasswordMatch();
+  }
+  
+  return true;
+}
+
+function validatePasswordMatch() {
+  const password = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  const statusElement = document.getElementById('confirm-password-status');
+  const confirmPasswordInput = document.getElementById('confirm-password');
+  
+  statusElement.textContent = '';
+  statusElement.className = 'status-message';
+  confirmPasswordInput.setCustomValidity('');
+  
+  // Only validate if both fields have values
+  if (password && confirmPassword) {
+    if (password !== confirmPassword) {
+      const errorMessage = 'Passwords do not match';
+      statusElement.textContent = `* ${errorMessage}`;
+      statusElement.className = 'status-message taken';
+      confirmPasswordInput.setCustomValidity(errorMessage);
+      return false;
+    } else {
+      statusElement.textContent = '✓ Passwords match';
+      statusElement.className = 'status-message available';
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 // Check email availability and format

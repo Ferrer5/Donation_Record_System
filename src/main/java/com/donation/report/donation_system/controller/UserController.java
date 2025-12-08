@@ -98,14 +98,7 @@ public class UserController {
     @PostMapping("/forgot-password")
     public Map<String, Object> requestPasswordReset(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
-        String username = payload.get("username");
         String email = payload.get("email");
-
-        if (username == null || username.trim().isEmpty()) {
-            response.put("success", false);
-            response.put("message", "Username is required");
-            return response;
-        }
 
         if (email == null || email.trim().isEmpty()) {
             response.put("success", false);
@@ -114,23 +107,17 @@ public class UserController {
         }
 
         try {
-            User user = userRepository.findByUsername(username);
+            User user = userRepository.findByEmail(email);
             
             if (user == null) {
                 response.put("success", false);
-                response.put("message", "Username not found");
-                return response;
-            }
-
-            if (!user.getEmail().equalsIgnoreCase(email)) {
-                response.put("success", false);
-                response.put("message", "Email does not match the username");
+                response.put("message", "No account found with that email address");
                 return response;
             }
 
             String verificationCode = passwordResetService.generateAndStoreCode(email);
             
-            emailService.sendVerificationCode(email, username, verificationCode);
+            emailService.sendVerificationCode(email, user.getUsername(), verificationCode);
             
             response.put("success", true);
             response.put("message", "Verification code sent to your email");
@@ -145,12 +132,12 @@ public class UserController {
     @PostMapping("/verify-code")
     public Map<String, Object> verifyCode(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
-        String username = payload.get("username");
+        String email = payload.get("email");
         String code = payload.get("code");
 
-        if (username == null || username.trim().isEmpty()) {
+        if (email == null || email.trim().isEmpty()) {
             response.put("success", false);
-            response.put("message", "Username is required");
+            response.put("message", "Email is required");
             return response;
         }
 
@@ -161,7 +148,7 @@ public class UserController {
         }
 
         try {
-            boolean isValid = passwordResetService.verifyCode(username, code);
+            boolean isValid = passwordResetService.verifyCode(email, code);
             
             if (isValid) {
                 response.put("success", true);
@@ -181,14 +168,14 @@ public class UserController {
     @PostMapping("/reset-password")
     public Map<String, Object> resetPassword(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new HashMap<>();
-        String username = payload.get("username");
+        String email = payload.get("email");
         String code = payload.get("code");
         String newPassword = payload.get("newPassword");
         String confirmPassword = payload.get("confirmPassword");
 
-        if (username == null || username.trim().isEmpty()) {
+        if (email == null || email.trim().isEmpty()) {
             response.put("success", false);
-            response.put("message", "Username is required");
+            response.put("message", "Email is required");
             return response;
         }
 
@@ -211,7 +198,14 @@ public class UserController {
         }
 
         try {
-            boolean isValid = passwordResetService.verifyCode(username, code);
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                response.put("success", false);
+                response.put("message", "No account found with that email address");
+                return response;
+            }
+
+            boolean isValid = passwordResetService.verifyCode(email, code);
             
             if (!isValid) {
                 response.put("success", false);
@@ -219,23 +213,48 @@ public class UserController {
                 return response;
             }
 
-            User user = userRepository.findByUsername(username);
-            if (user == null) {
-                response.put("success", false);
-                response.put("message", "User not found");
-                return response;
-            }
-
             user.setPassword(newPassword);
             userRepository.save(user);
             
-            passwordResetService.removeCode(username);
+            passwordResetService.removeCode(email);
             
             response.put("success", true);
             response.put("message", "Password reset successfully!");
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error resetting password: " + e.getMessage());
+        }
+        
+        return response;
+    }
+
+    @PostMapping("/check-password")
+    public Map<String, Object> checkPassword(@RequestBody Map<String, String> payload) {
+        Map<String, Object> response = new HashMap<>();
+        String email = payload.get("email");
+        String password = payload.get("password");
+
+        if (email == null || email.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Email is required");
+            return response;
+        }
+
+        try {
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                response.put("success", false);
+                response.put("message", "No account found with that email address");
+                return response;
+            }
+
+            boolean isSamePassword = user.getPassword().equals(password);
+            response.put("success", true);
+            response.put("isSamePassword", isSamePassword);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error checking password: " + e.getMessage());
         }
         
         return response;
