@@ -353,11 +353,7 @@ const Auth = {
   }
 };
 
-// ==================== Admin Authentication Functions ====================
 const AdminAuth = {
-  /**
-   * Handle admin login
-   */
   async login() {
     const requiredFields = ['adminName', 'adminPassword'];
     
@@ -388,10 +384,6 @@ const AdminAuth = {
   }
 };
 
-// ==================== Public API (for HTML onclick handlers) ====================
-/**
- * Login user - called from login form
- */
 function loginUser() {
   Auth.login();
 }

@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Donation Record System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta name="theme-color" content="#ff3b3b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Donation Record System - Sign Up</title>
   <link rel="stylesheet" href="style.css" />
-  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="auth-body">
-  <button class="back-btn" id="bckbtn" onclick="goBack()">←</button>
+  <button class="back-btn" id="bckbtn" onclick="goBack()" aria-label="Go back">
+    <span aria-hidden="true">←</span>
+  </button>
 
-  <div class="auth-container">
+  <div class="auth-container" role="main">
     <h2>Create Your Account</h2>
     <p class="auth-subtitle">Join our donation community today</p>
 
@@ -53,10 +60,19 @@
   </button>
 
   <footer>
-    <p>© 2025 Donation Report System | Developed by CTU Ginatilan Students.</p>
+    <p>© 2025 Donation Report System | Developed by CTU Ginatilan Students</p>
   </footer>
   
-  <script src="script.js"></script>
+  <div class="toast-container" id="toastContainer" role="alert" aria-live="assertive" aria-atomic="true"></div>
+  
+  <script src="script.js" defer></script>
+  
+  <script>
+    // Add touch detection for better mobile interactions
+    document.documentElement.classList.add('js');
     
+    // Prevent zoom on mobile when focusing on inputs
+    document.addEventListener('touchstart', function() {}, {passive: true});
+  </script>
 </body>
 </html>
